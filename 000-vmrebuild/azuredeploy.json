@@ -387,7 +387,7 @@
             ],
             "properties": {
                 "isEnabled": true,
-                "uri": "ho%2blNtQNVVvNzQ1ZLvQ8MivDbQGUHT%2bTjnnN1tgFrzw%3d",
+                "uri": "https://s2events.azure-automation.net/webhooks?token=ho%2blNtQNVVvNzQ1ZLvQ8MivDbQGUHT%2bTjnnN1tgFrzw%3d",
                 "runbook": {
                     "name": "[parameters('rebuildRunBookName')]"
                 }
