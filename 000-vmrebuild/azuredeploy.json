@@ -383,10 +383,11 @@
             "apiVersion": "2015-10-31",
             "name": "[concat(parameters('automationAccountName'),'/',variables('webhookRRB'))]",
             "dependsOn": [
-                "[concat('Microsoft.Automation/automationAccounts', parameters('automationAccountName'))]"
+                "[concat('Microsoft.Automation/automationAccounts/', parameters('automationAccountName'))]"
             ],
             "properties": {
                 "isEnabled": true,
+                "uri": "ho%2blNtQNVVvNzQ1ZLvQ8MivDbQGUHT%2bTjnnN1tgFrzw%3d",
                 "runbook": {
                     "name": "[parameters('rebuildRunBookName')]"
                 }
