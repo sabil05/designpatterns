@@ -1,0 +1,644 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Location to for the resources."
+            }
+        },
+        "vmNewOrExisting": {
+            "type": "string",
+            "defaultValue": "new",
+            "metadata": {
+                "description": "Determines whether or not a new storage account should be provisioned."
+            }
+        },
+        "vmName": {
+            "type": "string",
+            "defaultValue": "RebuildableVM01",
+            "metadata": {
+                "description": "Name for the Virtual Machine."
+            }
+        },
+        "adminUsername": {
+            "type": "string",
+            "defaultValue": "vmadmin",
+            "metadata": {
+                "description": "User name for the Virtual Machine."
+            }
+        },
+        "authenticationType": {
+            "type": "string",
+            "defaultValue": "password",
+            "allowedValues": [
+                "password",
+                "sshPublicKey"
+            ],
+            "metadata": {
+                "description": "Type of authentication to use on the Virtual Machine."
+            }
+        },
+        "adminPasswordOrKey": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Password or ssh key for the Virtual Machine."
+            }
+        },
+        "vmSize": {
+            "type": "string",
+            "defaultValue": "Standard_A2_v2",
+            "metadata": {
+                "description": "Size for the Virtual Machine."
+            }
+        },
+        "storageNewOrExisting": {
+            "type": "string",
+            "defaultValue": "new",
+            "metadata": {
+                "description": "Determines whether or not a new storage account should be provisioned."
+            }
+        },
+        "storageAccountName": {
+            "type": "string",
+            "defaultValue": "[concat('storage', uniqueString(resourceGroup().id))]",
+            "metadata": {
+                "description": "Name of the storage account"
+            }
+        },
+        "storageAccountType": {
+            "type": "string",
+            "defaultValue": "Standard_LRS",
+            "metadata": {
+                "description": "Storage account type"
+            }
+        },
+        "storageAccountResourceGroupName": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().name]",
+            "metadata": {
+                "description": "Name of the resource group for the existing storage account"
+            }
+        },
+        "virtualNetworkNewOrExisting": {
+            "type": "string",
+            "defaultValue": "new",
+            "metadata": {
+                "description": "Determines whether or not a new virtual network should be provisioned."
+            }
+        },
+        "virtualNetworkName": {
+            "type": "string",
+            "defaultValue": "VN-WE-RebuildableVMs",
+            "metadata": {
+                "description": "Name of the virtual network"
+            }
+        },
+        "addressPrefixes": {
+            "type": "array",
+            "defaultValue": [
+                "10.3.0.0/24"
+            ],
+            "metadata": {
+                "description": "Address prefix of the virtual network"
+            }
+        },
+        "subnetName": {
+            "type": "string",
+            "defaultValue": "default",
+            "metadata": {
+                "description": "Name of the subnet"
+            }
+        },
+        "subnetPrefix": {
+            "type": "string",
+            "defaultValue": "10.3.0.0/24",
+            "metadata": {
+                "description": "Subnet prefix of the virtual network"
+            }
+        },
+        "virtualNetworkResourceGroupName": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().name]",
+            "metadata": {
+                "description": "Name of the resource group for the existing virtual network"
+            }
+        },
+        "workspaceNewOrExisting": {
+            "type": "string",
+            "defaultValue": "new",
+            "metadata": {
+                "description": "Determines whether or not a new storage account should be provisioned."
+            }
+        },
+        "workspaceName": {
+            "type": "String",
+            "defaultValue": "LA-WE-HeartBeatWorkspace",
+            "metadata": {
+                "description": "Specifies the name of the workspace."
+            }
+        },
+        "workspaceLocation": {
+            "type": "String",
+            "defaultValue": "westeurope",
+            "allowedValues": [
+                "australiacentral",
+                "australiaeast",
+                "australiasoutheast",
+                "brazilsouth",
+                "canadacentral",
+                "centralindia",
+                "centralus",
+                "eastasia",
+                "eastus",
+                "eastus2",
+                "francecentral",
+                "japaneast",
+                "koreacentral",
+                "northcentralus",
+                "northeurope",
+                "southafricanorth",
+                "southcentralus",
+                "southeastasia",
+                "uksouth",
+                "ukwest",
+                "westcentralus",
+                "westeurope",
+                "westus",
+                "westus2"
+            ],
+            "metadata": {
+                "description": "Specifies the location in which to create the workspace."
+            }
+        },
+        "workspaceResourceGroupName": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().name]",
+            "metadata": {
+                "description": "Name of the resource group for the existing workspace name"
+            }
+        },
+        "workspacePricingTier": {
+            "type": "string",
+            "allowedValues": [
+                "PerGB2018",
+                "Free",
+                "Standalone",
+                "PerNode",
+                "Standard",
+                "Premium"
+            ],
+            "defaultValue": "PerGB2018",
+            "metadata": {
+                "description": "Pricing tier: PerGB2018 or legacy tiers (Free, Standalone, PerNode, Standard or Premium) which are not available to all customers."
+            }
+        },
+        "actionGroupName": {
+            "type": "string",
+            "defaultValue": "AG-RebuildRunBook",
+            "minLength": 1,
+            "metadata": {
+                "description": "Name for the Action group."
+            }
+        },
+        "actionGroupShortName": {
+            "type": "string",
+            "defaultValue": "AG-RRB",
+            "minLength": 1,
+            "maxLength": 12,
+            "metadata": {
+                "description": "Short name for the Action group."
+            }
+        },
+        "emailAddress": {
+            "type": "string",
+            "defaultValue": "vmadmin@server.com",
+            "metadata": {
+                "description": "Email address."
+            }
+        },
+        "activityLogAlertName": {
+            "type": "string",
+            "defaultValue": "AR-AzureServiceAlerts",
+            "minLength": 1,
+            "metadata": {
+                "description": "Name for the Azure Service Health alert rule."
+            }
+        },
+        "logSearchAlertRuleName": {
+            "type": "string",
+            "defaultValue": "AR-HeartbeatsLost",
+            "minLength": 1,
+            "metadata": {
+                "description": "Name for the log search alert rule."
+            }
+        },
+        "automationAccountName": {
+            "type": "string",
+            "defaultValue": "AA-WE-RebuildableVMRunbooks1",
+            "metadata": {
+                "description": "Provide the name of Automation Account"
+            }
+        },
+        "rebuildRunBookName": {
+            "type": "string",
+            "defaultValue": "RebuildRunbook",
+            "metadata": {
+                "description": "Provide the name of rebuild runbook"
+            }
+        },
+        "automationRegion": {
+            "type": "string",
+            "defaultValue": "westeurope",
+            "allowedValues": [
+                "australiacentral",
+                "australiaeast",
+                "australiasoutheast",
+                "brazilsouth",
+                "canadacentral",
+                "centralindia",
+                "centralus",
+                "eastasia",
+                "eastus",
+                "eastus2",
+                "francecentral",
+                "japaneast",
+                "koreacentral",
+                "northcentralus",
+                "northeurope",
+                "southafricanorth",
+                "southcentralus",
+                "southeastasia",
+                "uksouth",
+                "ukwest",
+                "westcentralus",
+                "westeurope",
+                "westus",
+                "westus2"
+            ],
+            "metadata": {
+                "description": "Location of the  Automation Account."
+            }
+        },
+        "automationAccountPricingTier": {
+            "type": "string",
+            "allowedValues": [
+                "Free",
+                "Basic"
+            ],
+            "defaultValue": "Basic",
+            "metadata": {
+                "description": "Pricing tier: Free or Basic"
+            }
+        }
+    },
+    "variables": {
+        "nicName": "[concat(parameters('vmName'), '-nic')]",
+        "linuxConfiguration": {
+            "disablePasswordAuthentication": true,
+            "ssh": {
+                "publicKeys": [
+                    {
+                        "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+                        "keyData": "[parameters('adminPasswordOrKey')]"
+                    }
+                ]
+            }
+        },
+        "workspaceID": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/',parameters('workspaceResourceGroupName'), '/providers/','Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]",
+        "alertName": "[parameters('logSearchAlertRuleName')]",
+        "alertDescr": "Sample log search alert",
+        "alertStatus": "true",
+        "alertSource": {
+            "Query": "[concat('(\"',parameters('workspaceName'),'\").Heartbeat | where TimeGenerated > ago(5m) | summarize count()<5 by Computer')]",
+            "Resource1": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/',parameters('workspaceResourceGroupName'), '/providers/','Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]",
+            "SourceId": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/',parameters('workspaceResourceGroupName'), '/providers/','Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]",
+            "Type": "ResultCount"
+        },
+        "alertSchedule": {
+            "Frequency": 15,
+            "Time": 60
+        },
+        "alertActions": {
+            "SeverityLevel": "4",
+            "SuppressTimeinMin": 20
+        },
+        "alertTrigger": {
+            "Operator": "GreaterThan",
+            "Threshold": "1"
+        },
+        "metricMeasurement": {
+            "thresholdOperator": "Equal",
+            "threshold": "1",
+            "metricTriggerType": "Consecutive",
+            "metricColumn": "Classification"
+        },
+        "actionGrp": {
+            "ActionGroup": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/',parameters('workspaceResourceGroupName'), '/providers/','microsoft.insights/actiongroups/', parameters('actionGroupName'))]",
+            "Subject": "Customized Email Header",
+            "Webhook": "{ \"alertname\":\"#alertrulename\", \"IncludeSearchResults\":true }"
+        },
+        "automationAccountID": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/',parameters('workspaceResourceGroupName'), '/providers/','Microsoft.Automation/automationAccounts/', parameters('automationAccountName'))]",
+        "runbookScriptUri": "https://raw.githubusercontent.com/zhjuve/azure-quickstart-templates/master/201-vm-new-or-existing-conditions/runbook.ps1",
+        "webhookRRB": "AlertForRebuildRunbook"
+    },
+    "resources": [
+        {
+            "name": "[concat(parameters('automationAccountName'), '/', parameters('rebuildRunBookName'))]",
+            "type": "Microsoft.Automation/automationAccounts/runbooks",
+            "location": "[parameters('automationRegion')]",
+            "apiVersion": "2015-10-31",
+            "dependsOn": [
+                "[concat('Microsoft.Automation/automationAccounts/', parameters('automationAccountName'))]"
+            ],
+            "properties": {
+                "runbookType": "PowerShell",
+                "logProgress": false,
+                "logVerbose": false,
+                "state": "Published",
+                "description": "Rebuild VM runbook",
+                "publishContentLink": {
+                    "uri": "[variables('runbookScriptUri')]",
+                    "version": "1.0.0.0"
+                }
+            }
+        },
+        {
+            "name": "[parameters('automationAccountName')]",
+            "type": "Microsoft.Automation/automationAccounts",
+            "apiVersion": "2015-10-31",
+            "properties": {
+                "sku": {
+                    "name": "[parameters('automationAccountPricingTier')]"
+                }
+            },
+            "location": "[parameters('automationRegion')]",
+            "tags": {
+            }
+        },
+        {
+            "type": "Microsoft.Automation/automationAccounts/webhooks",
+            "apiVersion": "2015-10-31",
+            "name": "[variables('webhookRRB')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Automation/automationAccounts', parameters('automationAccountName'))]"
+            ],
+            "properties": {
+                "isEnabled": true,
+                "runbook": {
+                    "name": "[parameters('rebuildRunBookName')]"
+                }
+            }
+        },
+        {
+            "name": "[variables('alertName')]",
+            "type": "Microsoft.Insights/scheduledQueryRules",
+            "apiVersion": "2018-04-16",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[parameters('workspaceName')]",
+                "[parameters('actionGroupName')]"
+            ],
+            "properties": {
+                "description": "[variables('alertDescr')]",
+                "enabled": "[variables('alertStatus')]",
+                "source": {
+                    "query": "[variables('alertSource').Query]",
+                    "authorizedResources": "[concat(array(variables('alertSource').Resource1))]",
+                    "dataSourceId": "[variables('alertSource').SourceId]",
+                    "queryType": "[variables('alertSource').Type]"
+                },
+                "schedule": {
+                    "frequencyInMinutes": "[variables('alertSchedule').Frequency]",
+                    "timeWindowInMinutes": "[variables('alertSchedule').Time]"
+                },
+                "action": {
+                    "odata.type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.Microsoft.AppInsights.Nexus.DataContracts.Resources.ScheduledQueryRules.AlertingAction",
+                    "severity": "[variables('alertActions').SeverityLevel]",
+                    "throttlingInMin": "[variables('alertActions').SuppressTimeinMin]",
+                    "aznsAction": {
+                        "actionGroup": "[array(variables('actionGrp').ActionGroup)]",
+                        "emailSubject": "[variables('actionGrp').Subject]",
+                        "customWebhookPayload": "[variables('actionGrp').Webhook]"
+                    },
+                    "trigger": {
+                        "thresholdOperator": "[variables('alertTrigger').Operator]",
+                        "threshold": "[variables('alertTrigger').Threshold]",
+                        "metricTrigger": {
+                            "thresholdOperator": "[variables('metricMeasurement').thresholdOperator]",
+                            "threshold": "[variables('metricMeasurement').threshold]",
+                            "metricColumn": "[variables('metricMeasurement').metricColumn]",
+                            "metricTriggerType": "[variables('metricMeasurement').metricTriggerType]"
+                        }
+                    }
+                }
+            }
+        },
+
+        {
+            "type": "Microsoft.Insights/actionGroups",
+            "apiVersion": "2017-04-01",
+            "name": "[parameters('actionGroupName')]",
+            "location": "Global",
+            "properties": {
+                "groupShortName": "[parameters('actionGroupShortName')]",
+                "enabled": true,
+                "emailReceivers": [
+                    {
+                        "name": "emailReceiver",
+                        "emailAddress": "[parameters('emailAddress')]"
+                    }
+                ],
+                "smsReceivers": [
+                ],
+                "webhookReceivers": [
+                ],
+                "itsmReceivers": [
+                ],
+                "azureAppPushReceivers": [
+                ],
+                "automationRunbookReceivers": [
+
+                ],
+                "voiceReceivers": [
+                ],
+                "logicAppReceivers": [
+                ],
+                "azureFunctionReceivers": [
+                ],
+                "armRoleReceivers": [
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Insights/activityLogAlerts",
+            "apiVersion": "2017-04-01",
+            "name": "[parameters('activityLogAlertName')]",
+            "location": "Global",
+            "dependsOn": [
+                "[parameters('actionGroupName')]"
+            ],
+            "properties": {
+                "enabled": true,
+                "scopes": [
+                    "[subscription().id]"
+                ],
+                "condition": {
+                    "allOf": [
+                        {
+                            "field": "category",
+                            "equals": "ServiceHealth"
+                        }
+                    ]
+                },
+                "actions": {
+                    "actionGroups": [
+                        {
+                            "actionGroupId": "[resourceId('Microsoft.Insights/actionGroups', parameters('actionGroupName'))]"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "condition": "[equals(parameters('vmNewOrExisting'), 'new')]",
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "name": "[concat(parameters('vmName'), '/Microsoft.EnterpriseCloud.Monitoring')]",
+            "apiVersion": "2017-03-30",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]",
+                "[concat('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]"
+            ],
+            "properties": {
+                "publisher": "Microsoft.EnterpriseCloud.Monitoring",
+                "type": "OmsAgentForLinux",
+                "typeHandlerVersion": "1.7",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                    "workspaceId": "[reference(variables('workspaceID'), '2015-11-01-preview').customerId]"
+                },
+                "protectedSettings": {
+                    "workspaceKey": "[listKeys(variables('workspaceID'), '2015-11-01-preview').primarySharedKey]"
+                }
+            }
+        },
+        {
+            "condition": "[equals(parameters('workspaceNewOrExisting'), 'new')]",
+            "type": "Microsoft.OperationalInsights/workspaces",
+            "name": "[parameters('workspaceName')]",
+            "apiVersion": "2015-11-01-preview",
+            "location": "[parameters('workspaceLocation')]",
+            "properties": {
+                "features": {
+                    "searchVersion": 1
+                }
+            },
+            "sku": {
+                "name": "[parameters('workspacePricingTier')]"
+            }
+        },
+        {
+            "condition": "[equals(parameters('storageNewOrExisting'), 'new')]",
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2017-06-01",
+            "name": "[parameters('storageAccountName')]",
+            "location": "[parameters('location')]",
+            "kind": "Storage",
+            "sku": {
+                "name": "[parameters('storageAccountType')]"
+            }
+        },
+        {
+            "condition": "[equals(parameters('virtualNetworkNewOrExisting'), 'new')]",
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2017-09-01",
+            "name": "[parameters('virtualNetworkName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": "[parameters('addressPrefixes')]"
+                },
+                "subnets": [
+                    {
+                        "name": "[parameters('subnetName')]",
+                        "properties": {
+                            "addressPrefix": "[parameters('subnetPrefix')]"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "2017-09-01",
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[variables('nicName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[parameters('virtualNetworkName')]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[resourceId(parameters('virtualNetworkResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets/', parameters('virtualNetworkName'), parameters('subnetName'))]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "condition": "[equals(parameters('vmNewOrExisting'), 'new')]",
+            "apiVersion": "2017-03-30",
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "[parameters('vmName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[parameters('storageAccountName')]",
+                "[variables('nicName')]"
+            ],
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('vmSize')]"
+                },
+                "osProfile": {
+                    "computerName": "[parameters('vmName')]",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword": "[parameters('adminPasswordOrKey')]",
+                    "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "Canonical",
+                        "offer": "UbuntuServer",
+                        "sku": "16.04-LTS",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "caching": "ReadWrite",
+                        "createOption": "FromImage"
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
+                        }
+                    ]
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": true,
+                        "storageUri": "[reference(resourceId(parameters('storageAccountResourceGroupName'), 'Microsoft.Storage/storageAccounts/', parameters('storageAccountName')), '2017-06-01').primaryEndpoints.blob]"
+                    }
+                }
+            }
+        }
+    ]
+}
