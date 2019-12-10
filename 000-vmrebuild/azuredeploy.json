@@ -312,7 +312,7 @@
         "alertDescr": "Sample log search alert",
         "alertStatus": "true",
         "alertSource": {
-            "Query": "[concat('(\"',parameters('workspaceName'),'\").Heartbeat | where TimeGenerated > ago(5m) | summarize count()<5 by Computer')]",
+            "Query": "[concat('(\"',parameters('workspaceName'),'\").Heartbeat | where TimeGenerated > ago(5m) | summarize count()<5 by Computer | where Computer == \"',parameters('vmName'),'\"')]",
             "Resource1": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/',parameters('workspaceResourceGroupName'), '/providers/','Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]",
             "SourceId": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/',parameters('workspaceResourceGroupName'), '/providers/','Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]",
             "Type": "ResultCount"
