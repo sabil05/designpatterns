@@ -387,6 +387,7 @@
             ],
             "properties": {
                 "isEnabled": true,
+                "expiryTime": "2029-12-09T15:14:53.707+00:00",
                 "uri": "https://s2events.azure-automation.net/webhooks?token=ho%2blNtQNVVvNzQ1ZLvQ8MivDbQGUHT%2bTjnnN1tgFrzw%3d",
                 "runbook": {
                     "name": "[parameters('rebuildRunBookName')]"
