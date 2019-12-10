@@ -461,6 +461,19 @@
                 "azureAppPushReceivers": [
                 ],
                 "automationRunbookReceivers": [
+                    {
+                        "automationAccountId": "[variables('automationAccountID')]",
+                        "runbookName": "RebuildVM",
+                        "webhookResourceId": "[concat(variables('automationAccountID'),'/webhooks/',variables('webhookRRB'))]",
+                        "isGlobalRunbook": false,
+                        "name": "AA",
+                        "serviceUri": "https://s2events.azure-automation.net/webhooks?token=ho%2blNtQNVVvNzQ1ZLvQ8MivDbQGUHT%2bTjnnN1tgFrzw%3d",
+                        "useCommonAlertSchema": true,
+                        "useAadAuth": false,
+                        "objectId": null,
+                        "identifierUri": null,
+                        "tenantId": null
+                    }
 
                 ],
                 "voiceReceivers": [
