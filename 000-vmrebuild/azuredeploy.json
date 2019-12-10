@@ -341,7 +341,7 @@
             "Webhook": "{ \"alertname\":\"#alertrulename\", \"IncludeSearchResults\":true }"
         },
         "automationAccountID": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/',parameters('workspaceResourceGroupName'), '/providers/','Microsoft.Automation/automationAccounts/', parameters('automationAccountName'))]",
-        "runbookScriptUri": "https://raw.githubusercontent.com/zhjuve/designpatterns/master/00-vmrebuild/runbook.ps1",
+        "runbookScriptUri": "https://raw.githubusercontent.com/zhjuve/designpatterns/master/000-vmrebuild/runbook.ps1",
         "webhookRRB": "AlertForRebuildRunbook"
     },
     "resources": [
