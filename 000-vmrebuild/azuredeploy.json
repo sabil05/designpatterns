@@ -381,9 +381,9 @@
         {
             "type": "Microsoft.Automation/automationAccounts/webhooks",
             "apiVersion": "2015-10-31",
-            "name": "[variables('webhookRRB')]",
+            "name": "[concat(parameters('automationAccountName'),'/',variables('webhookRRB'))]",
             "dependsOn": [
-                "[resourceId('Microsoft.Automation/automationAccounts', parameters('automationAccountName'))]"
+                "[concat('Microsoft.Automation/automationAccounts', parameters('automationAccountName'))]"
             ],
             "properties": {
                 "isEnabled": true,
