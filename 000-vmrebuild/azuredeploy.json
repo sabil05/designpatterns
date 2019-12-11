@@ -312,28 +312,22 @@
         "alertDescr": "Sample log search alert",
         "alertStatus": "true",
         "alertSource": {
-            "Query": "[concat('(\"',parameters('workspaceName'),'\").Heartbeat | where TimeGenerated > ago(5m) | summarize count()<5 by Computer | where Computer == \"',parameters('vmName'),'\"')]",
+            "Query": "[concat('Heartbeat | where TimeGenerated > ago(5m) | where Computer == \"',parameters('vmName'),'\"')]",
             "Resource1": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/',parameters('workspaceResourceGroupName'), '/providers/','Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]",
             "SourceId": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/',parameters('workspaceResourceGroupName'), '/providers/','Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]",
             "Type": "ResultCount"
         },
         "alertSchedule": {
-            "Frequency": 15,
-            "Time": 60
+            "Frequency": 5,
+            "Time": 5
         },
         "alertActions": {
-            "SeverityLevel": "4",
-            "SuppressTimeinMin": 20
+            "SeverityLevel": "1",
+            "SuppressTimeinMin": 5
         },
         "alertTrigger": {
-            "Operator": "GreaterThan",
-            "Threshold": "1"
-        },
-        "metricMeasurement": {
-            "thresholdOperator": "Equal",
-            "threshold": "1",
-            "metricTriggerType": "Consecutive",
-            "metricColumn": "Classification"
+            "Operator": "LessThan",
+            "Threshold": "5"
         },
         "actionGrp": {
             "ActionGroup": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/',parameters('workspaceResourceGroupName'), '/providers/','microsoft.insights/actiongroups/', parameters('actionGroupName'))]",
@@ -413,13 +407,7 @@
                     },
                     "trigger": {
                         "thresholdOperator": "[variables('alertTrigger').Operator]",
-                        "threshold": "[variables('alertTrigger').Threshold]",
-                        "metricTrigger": {
-                            "thresholdOperator": "[variables('metricMeasurement').thresholdOperator]",
-                            "threshold": "[variables('metricMeasurement').threshold]",
-                            "metricColumn": "[variables('metricMeasurement').metricColumn]",
-                            "metricTriggerType": "[variables('metricMeasurement').metricTriggerType]"
-                        }
+                        "threshold": "[variables('alertTrigger').Threshold]"
                     }
                 }
             }
