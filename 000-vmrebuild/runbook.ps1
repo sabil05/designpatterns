@@ -1,18 +1,25 @@
-# Ensures you do not inherit an AzureRMContext in your runbook
-Disable-AzureRmContextAutosave –Scope Process
-
-$connection = Get-AutomationConnection -Name AzureRunAsConnection
-while(!($connectionResult) -And ($logonAttempt -le 10))
+$connectionName = "AzureRunAsConnection"
+try
 {
-    $LogonAttempt++
-    # Logging in to Azure...
-    $connectionResult =    Connect-AzureRmAccount `
-                               -ServicePrincipal `
-                               -Tenant $connection.TenantID `
-                               -ApplicationID $connection.ApplicationID `
-                               -CertificateThumbprint $connection.CertificateThumbprint
+    # Get the connection "AzureRunAsConnection "
+    $servicePrincipalConnection=Get-AutomationConnection -Name $connectionName         
 
-    Start-Sleep -Seconds 30
+    "Logging in to Azure..."
+    Add-AzureRmAccount `
+        -ServicePrincipal `
+        -TenantId $servicePrincipalConnection.TenantId `
+        -ApplicationId $servicePrincipalConnection.ApplicationId `
+        -CertificateThumbprint $servicePrincipalConnection.CertificateThumbprint 
+}
+catch {
+    if (!$servicePrincipalConnection)
+    {
+        $ErrorMessage = "Connection $connectionName not found."
+        throw $ErrorMessage
+    } else{
+        Write-Error -Message $_.Exception
+        throw $_.Exception
+    }
 }
 
-Stop-AzureRmVM -Name 'RebuildableVM01' -ResourceGroupName 'ResourceGroupName'
+Stop-AzureRmVM -Name 'RebuildableVM01' -ResourceGroupName 'RG-WE-RebuildableVMs' -Force;
