@@ -342,6 +342,7 @@
         },
         "automationAccountID": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/',parameters('workspaceResourceGroupName'), '/providers/','Microsoft.Automation/automationAccounts/', parameters('automationAccountName'))]",
         "runbookScriptUri": "https://raw.githubusercontent.com/zhjuve/designpatterns/master/000-vmrebuild/runbook.ps1",
+        "webhookURI": "[concat('https://s2events.azure-automation.net/webhooks?token=wbhookuniuri',uniqueString(subscription().id),uniqueString(resourceGroup().id),uniqueString(resourceGroup().id, deployment().name))]",
         "webhookRRB": "AlertForRebuildRunbook"
     },
     "resources": [
@@ -388,7 +389,7 @@
             "properties": {
                 "isEnabled": true,
                 "expiryTime": "2029-12-09T15:14:53.707+00:00",
-                "uri": "[concat('https://s2events.azure-automation.net/webhooks?token=wbhookuniuri',uniqueString(resourceGroup().id),uniqueString(resourceGroup().id),uniqueString(resourceGroup().id, deployment().name))]",
+                "uri": "[variables('webhookURI')]",
                 "runbook": {
                     "name": "[parameters('rebuildRunBookName')]"
                 }
@@ -654,5 +655,11 @@
                 }
             }
         }
-    ]
+    ],
+    "outputs": {
+        "webhookURI": {
+            "type": "string",
+            "value": "[variables('webhookURI')]"
+        }
+    }
 }
