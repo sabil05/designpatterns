@@ -1,4 +1,4 @@
-[OutputType("PSAzureOperationResponse")]
+#[OutputType("PSAzureOperationResponse")]
 param
 (
     [Parameter (Mandatory=$false)]
@@ -25,8 +25,9 @@ if ($WebhookData)
         $ResourceType = ($alertTargetIdArray)[6] + "/" + ($alertTargetIdArray)[7]
         $ResourceName = ($alertTargetIdArray)[-1]
         $status = $Essentials.monitorCondition
-        $alertCIs = (($AlertContext.AffectedConfigurationItems)[0]).Split("/")
-        Write-Verbose "Configuration Item: $alertCIs" -Verbose
+        $alertCIs = $AlertContext.AffectedConfigurationItems
+        $alertCI = ($AlertContext.AffectedConfigurationItems)[0]
+        Write-Error "Configuration Item: $alertCI of $alertCIs" -Verbose
     }
     elseif ($schemaId -eq "AzureMonitorMetricAlert") {
         # This is the near-real-time Metric Alert schema
@@ -88,7 +89,7 @@ if ($WebhookData)
             Set-AzureRmContext -SubscriptionId $SubId -ErrorAction Stop | Write-Verbose
 
             # Find out VM name from Affected Configuration Items array
-            Write-Verbose "Stopping the VM - $ResourceName - in resource group - $ResourceGroupName" -Verbose
+            #Write-Verbose "Stopping the VM - $ResourceName - in resource group - $ResourceGroupName" -Verbose
             #Stop-AzureRmVM -Name $ResourceName -ResourceGroupName $ResourceGroupName -Force
             #Start-AzureRmVM -Name $ResourceName -ResourceGroupName $ResourceGroupName
             $vm = Get-AzureRmVm -Name $alertCIs -ResourceGroupName $ResourceGroupName
