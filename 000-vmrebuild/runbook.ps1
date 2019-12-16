@@ -91,27 +91,25 @@ if ($WebhookData)
             # Find out VM name from Affected Configuration Items array
             #Stop-AzureRmVM -Name $ResourceName -ResourceGroupName $ResourceGroupName -Force
             #Start-AzureRmVM -Name $ResourceName -ResourceGroupName $ResourceGroupName
-            if ($alertCI -neq $null) {
+            if (!($alertCI -eq $null)) {
                 Write-Verbose "Getting the VM = $alertCI" -Verbose
                 $oldvm = Get-AzureRmVm -Name $alertCI -ResourceGroupName $ResourceGroupName
-            } elseif ((Get-AzureRmVm -Name "RebuildableVM01" -ResourceGroupName "RG-WE-RebuildableVMs") -neq $null ) {
-                Write-Verbose "Takinf default VM = $alertCI" -Verbose
+            } elseif (!((Get-AzureRmVm -Name "RebuildableVM01" -ResourceGroupName "RG-WE-RebuildableVMs") -eq $null )) {
+                Write-Verbose "Taking default VM = RebuildableVM01" -Verbose
                 $oldvm = Get-AzureRmVm -Name "RebuildableVM01" -ResourceGroupName "RG-WE-RebuildableVMs"
             } else {
                 Write-Error "NO VM TO REBUILD"
             }
-
-            Write-Verbose "Getting VM details... for $alertCI" -Verbose
             $oldvm
-            Write-Verbose "Deleting old VM ($alertCI)" -Verbose
-            Remove-AzureRmVM -Name $alertCI -ResourceGroupName $ResourceGroupName -Force
+            Write-Verbose "Deleting old VM ($oldvm.Name)" -Verbose
+            Remove-AzureRmVM -Name $oldvm.Name -ResourceGroupName $ResourceGroupName -Force
             #$azureLocation              = $vm.Location
             #$azureResourceGroup         = $vm.ResourceGroupName
             #$azureVmName                = $vm.Name
             #$azureVmOsDiskName          = $vm.StorageProfile.OsDisk.Name
             #$azureVmSize                = $vm.HardwareProfile.VmSize
-            $osDisk = Get-AzureRmDisk -ResourceGroupName $oldvm.ResourceGroupName -DiskName $oldvm.StorageProfile.OsDisk.Name
-            $vmConfig = New-AzureRmVMConfig -VMName $oldvm.Name -VMSize $oldvm.HardwareProfile.VmSize
+            $osDisk = Get-AzureDisk -ResourceGroupName $oldvm.ResourceGroupName -DiskName $oldvm.StorageProfile.OsDisk.Name
+            $vmConfig = New-AzureVMConfig -VMName $oldvm.Name -VMSize $oldvm.HardwareProfile.VmSize
             $vm = Add-AzureRmVMNetworkInterface -VM $vmConfig -Id $oldvm.NetworkProfile.NetworkInterfaces.Id
             $vm = Set-AzureRmVMOSDisk -VM $vm -ManagedDiskId $osDisk.Id -CreateOption Attach
             New-AzureRmVM -VM $vm -ResourceGroupName $oldvm.ResourceGroupName -Location $oldvm.Location
