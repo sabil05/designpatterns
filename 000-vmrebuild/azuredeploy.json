@@ -401,8 +401,7 @@
                     "throttlingInMin": "[variables('alertActions').SuppressTimeinMin]",
                     "aznsAction": {
                         "actionGroup": "[array(variables('actionGrp').ActionGroup)]",
-                        "emailSubject": "[variables('actionGrp').Subject]",
-                        "customWebhookPayload": "[variables('actionGrp').Webhook]"
+                        "emailSubject": "[variables('actionGrp').Subject]"
                     },
                     "trigger": {
                         "thresholdOperator": "[variables('alertTrigger').Operator]",
