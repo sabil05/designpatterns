@@ -312,14 +312,14 @@
         "alertDescr": "Sample log search alert",
         "alertStatus": "true",
         "alertSource": {
-            "Query": "[concat('Heartbeat | where TimeGenerated > ago(5m) | where Computer == \"',parameters('vmName'),'\"')]",
+            "Query": "[concat('Heartbeat | where TimeGenerated > ago(10m) | where Computer == \"',parameters('vmName'),'\"')]",
             "Resource1": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/',parameters('workspaceResourceGroupName'), '/providers/','Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]",
             "SourceId": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/',parameters('workspaceResourceGroupName'), '/providers/','Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]",
             "Type": "ResultCount"
         },
         "alertSchedule": {
             "Frequency": 5,
-            "Time": 5
+            "Time": 10
         },
         "alertActions": {
             "SeverityLevel": "1",
@@ -327,12 +327,11 @@
         },
         "alertTrigger": {
             "Operator": "LessThan",
-            "Threshold": "5"
+            "Threshold": "6"
         },
         "actionGrp": {
             "ActionGroup": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/',parameters('workspaceResourceGroupName'), '/providers/','microsoft.insights/actiongroups/', parameters('actionGroupName'))]",
-            "Subject": "Customized Email Header",
-            "Webhook": "{ \"alertname\":\"#alertrulename\", \"IncludeSearchResults\":true }"
+            "Subject": "Customized Email Header"
         },
         "automationAccountID": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/',parameters('workspaceResourceGroupName'), '/providers/','Microsoft.Automation/automationAccounts/', parameters('automationAccountName'))]",
         "runbookScriptUri": "https://raw.githubusercontent.com/zhjuve/designpatterns/master/000-vmrebuild/runbook.ps1",
