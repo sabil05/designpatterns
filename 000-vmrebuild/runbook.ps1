@@ -1,4 +1,4 @@
-#[OutputType("PSAzureOperationResponse")]
+[OutputType("PSAzureOperationResponse")]
 param
 (
     [Parameter (Mandatory=$false)]
@@ -25,9 +25,9 @@ if ($WebhookData)
         $ResourceType = ($alertTargetIdArray)[6] + "/" + ($alertTargetIdArray)[7]
         $ResourceName = ($alertTargetIdArray)[-1]
         $status = $Essentials.monitorCondition
-        $alertCIs = $AlertContext.AffectedConfigurationItems
-        $alertCI = ($AlertContext.AffectedConfigurationItems)[0]
-        Write-Error "Configuration Item: $alertCI of $alertCIs" -Verbose
+        $alertCI = ((($AlertContext.AffectedConfigurationItems)[0]).Split("/"))[-1]
+        #Write-Verbose "Configuration Item: $alertCIs" -Verbose
+        Write-Verbose "Configuration Item: $alertCI" -Verbose
     }
     elseif ($schemaId -eq "AzureMonitorMetricAlert") {
         # This is the near-real-time Metric Alert schema
@@ -89,13 +89,32 @@ if ($WebhookData)
             Set-AzureRmContext -SubscriptionId $SubId -ErrorAction Stop | Write-Verbose
 
             # Find out VM name from Affected Configuration Items array
-            #Write-Verbose "Stopping the VM - $ResourceName - in resource group - $ResourceGroupName" -Verbose
             #Stop-AzureRmVM -Name $ResourceName -ResourceGroupName $ResourceGroupName -Force
             #Start-AzureRmVM -Name $ResourceName -ResourceGroupName $ResourceGroupName
-            $vm = Get-AzureRmVm -Name $alertCIs -ResourceGroupName $ResourceGroupName
-            Write-Verbose "Getting VM details... for $alertCIs" -Verbose
-            $vm
+            if ($alertCI -neq $null) {
+                Write-Verbose "Getting the VM = $alertCI" -Verbose
+                $oldvm = Get-AzureRmVm -Name $alertCI -ResourceGroupName $ResourceGroupName
+            } elseif ((Get-AzureRmVm -Name "RebuildableVM01" -ResourceGroupName "RG-WE-RebuildableVMs") -neq $null ) {
+                Write-Verbose "Takinf default VM = $alertCI" -Verbose
+                $oldvm = Get-AzureRmVm -Name "RebuildableVM01" -ResourceGroupName "RG-WE-RebuildableVMs"
+            } else {
+                Write-Error "NO VM TO REBUILD"
+            }
 
+            Write-Verbose "Getting VM details... for $alertCI" -Verbose
+            $oldvm
+            Write-Verbose "Deleting old VM ($alertCI)" -Verbose
+            Remove-AzureRmVM -Name $alertCI -ResourceGroupName $ResourceGroupName -Force
+            #$azureLocation              = $vm.Location
+            #$azureResourceGroup         = $vm.ResourceGroupName
+            #$azureVmName                = $vm.Name
+            #$azureVmOsDiskName          = $vm.StorageProfile.OsDisk.Name
+            #$azureVmSize                = $vm.HardwareProfile.VmSize
+            $osDisk = Get-AzureRmDisk -ResourceGroupName $oldvm.ResourceGroupName -DiskName $oldvm.StorageProfile.OsDisk.Name
+            $vmConfig = New-AzureRmVMConfig -VMName $oldvm.Name -VMSize $oldvm.HardwareProfile.VmSize
+            $vm = Add-AzureRmVMNetworkInterface -VM $vmConfig -Id $oldvm.NetworkProfile.NetworkInterfaces.Id
+            $vm = Set-AzureRmVMOSDisk -VM $vm -ManagedDiskId $osDisk.Id -CreateOption Attach
+            New-AzureRmVM -VM $vm -ResourceGroupName $oldvm.ResourceGroupName -Location $oldvm.Location
         }
         elseif ($ResourceType -eq "Microsoft.Compute/virtualMachines")
         {
@@ -122,11 +141,11 @@ if ($WebhookData)
             #Start-AzureRmVM -Name $ResourceName -ResourceGroupName $ResourceGroupName
             $vm = Get-AzureRmVm -Name $ResourceName -ResourceGroupName $ResourceGroupName
             Write-Verbose "Getting VM details... for $ResourceName" -Verbose
-            $vm
+            #$vm
             # get 
-            $diagSa = [regex]::match($vm.DiagnosticsProfile.bootDiagnostics.storageUri, '^http[s]?://(.+?)\.').groups[1].value
-            Write-Verbose "Diagnostic storage container for $ResourceName :" -Verbose
-            Write-Verbose "$diagSa" -Verbose
+            #$diagSa = [regex]::match($vm.DiagnosticsProfile.bootDiagnostics.storageUri, '^http[s]?://(.+?)\.').groups[1].value
+            #Write-Verbose "Diagnostic storage container for $ResourceName :" -Verbose
+            #Write-Verbose "$diagSa" -Verbose
             # get VM parameters
             $azureLocation              = $vm.Location
             $azureResourceGroup         = $vm.ResourceGroupName
@@ -134,15 +153,7 @@ if ($WebhookData)
             $azureVmOsDiskName          = $vm.StorageProfile.OsDisk.Name
             $azureVmSize                = $vm.HardwareProfile.VmSize
             # get nic
-            foreach($nicUri in $vm.NetworkProfile.NetworkInterfaces.Id) {
-            $nic = Get-AzNetworkInterface -ResourceGroupName $vm.ResourceGroupName -Name $nicUri.Split('/')[-1]
-            Remove-AzNetworkInterface -Name $nic.Name -ResourceGroupName $vm.ResourceGroupName -Force
-            foreach($ipConfig in $nic.IpConfigurations) {
-                if($ipConfig.PublicIpAddress -ne $null) {
-                    Remove-AzPublicIpAddress -ResourceGroupName $vm.ResourceGroupName -Name $ipConfig.PublicIpAddress.Id.Split('/')[-1] -Force
-                }
-             }
-            }
+
         }
         else {
             # ResourceType not supported
