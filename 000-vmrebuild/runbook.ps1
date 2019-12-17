@@ -88,7 +88,6 @@ if ($WebhookData)
             Add-AzureRMAccount -ServicePrincipal -Tenant $Conn.TenantID -ApplicationId $Conn.ApplicationID -CertificateThumbprint $Conn.CertificateThumbprint | Write-Verbose
             Write-Verbose "Setting subscription to work against: $SubId" -Verbose
             Set-AzureRmContext -SubscriptionId $SubId -ErrorAction Stop | Write-Verbose
-            Select-AzureSubscription -SubscriptionId $SubId
 
             # Find out VM name from Affected Configuration Items array
             #Stop-AzureRmVM -Name $ResourceName -ResourceGroupName $ResourceGroupName -Force
