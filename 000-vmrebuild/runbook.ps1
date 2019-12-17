@@ -25,7 +25,7 @@ if ($WebhookData)
         $ResourceType = ($alertTargetIdArray)[6] + "/" + ($alertTargetIdArray)[7]
         $ResourceName = ($alertTargetIdArray)[-1]
         $status = $Essentials.monitorCondition
-        $alertCI = (($.Essentials.alertRule).Split("-"))[-1]
+        $alertCI = (($Essentials.alertRule).Split("-"))[-1]
         #Write-Verbose "Configuration Item: $alertCIs" -Verbose
         Write-Verbose "Configuration Item: $alertCI" -Verbose
     }
