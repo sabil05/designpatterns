@@ -28,6 +28,7 @@ if ($WebhookData)
         $alertCI = (($Essentials.alertRule).Split("-"))[-1]
         #Write-Verbose "Configuration Item: $alertCIs" -Verbose
         Write-Verbose "Configuration Item: $alertCI" -Verbose
+        $alertCI
     }
     elseif ($schemaId -eq "AzureMonitorMetricAlert") {
         # This is the near-real-time Metric Alert schema
@@ -87,6 +88,7 @@ if ($WebhookData)
             Add-AzureRMAccount -ServicePrincipal -Tenant $Conn.TenantID -ApplicationId $Conn.ApplicationID -CertificateThumbprint $Conn.CertificateThumbprint | Write-Verbose
             Write-Verbose "Setting subscription to work against: $SubId" -Verbose
             Set-AzureRmContext -SubscriptionId $SubId -ErrorAction Stop | Write-Verbose
+            Select-AzureSubscription -SubscriptionId $SubId
 
             # Find out VM name from Affected Configuration Items array
             #Stop-AzureRmVM -Name $ResourceName -ResourceGroupName $ResourceGroupName -Force
@@ -111,10 +113,14 @@ if ($WebhookData)
             #$azureVmName                = $vm.Name
             #$azureVmOsDiskName          = $vm.StorageProfile.OsDisk.Name
             #$azureVmSize                = $vm.HardwareProfile.VmSize
-            $osDisk = Get-AzureDisk -ResourceGroupName $oldvm.ResourceGroupName -DiskName $oldvm.StorageProfile.OsDisk.Name
+            $osDisk = Get-AzureDisk -DiskName $oldvm.StorageProfile.OsDisk.Name
+            $osDisk
             $vmConfig = New-AzureVMConfig -VMName $oldvm.Name -VMSize $oldvm.HardwareProfile.VmSize
+            $vmConfig
             $vm = Add-AzureRmVMNetworkInterface -VM $vmConfig -Id $oldvm.NetworkProfile.NetworkInterfaces.Id
+            $vm
             $vm = Set-AzureRmVMOSDisk -VM $vm -ManagedDiskId $osDisk.Id -CreateOption Attach
+            $vm
             New-AzureRmVM -VM $vm -ResourceGroupName $oldvm.ResourceGroupName -Location $oldvm.Location
         }
         elseif ($ResourceType -eq "Microsoft.Compute/virtualMachines")
