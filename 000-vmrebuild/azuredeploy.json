@@ -366,7 +366,7 @@
                 "name": "AzureRm.Insights",
                 "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.insights.5.1.5.nupkg"
             }
-        ],
+        ]
     },
     "resources": [
         {
