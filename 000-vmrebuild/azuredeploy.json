@@ -374,7 +374,7 @@
         },
 
         {
-            "name": "[variables('alertName')]",
+            "name": "[concat(variables('alertName'),'-',parameters('vmName'))]",
             "type": "Microsoft.Insights/scheduledQueryRules",
             "apiVersion": "2018-04-16",
             "location": "[parameters('location')]",
