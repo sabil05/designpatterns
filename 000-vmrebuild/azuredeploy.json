@@ -310,9 +310,9 @@
         "workspaceID": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/',parameters('workspaceResourceGroupName'), '/providers/','Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]",
         "alertName": "[parameters('logSearchAlertRuleName')]",
         "alertDescr": "Sample log search alert",
-        "alertStatus": "true",
+        "alertStatus": "false",
         "alertSource": {
-            "Query": "[concat('Heartbeat | where TimeGenerated > ago(10m) | where Computer == \"',parameters('vmName'),'\"')]",
+            "Query": "[concat('Heartbeat | where Computer == \"',parameters('vmName'),'\"')]",
             "Resource1": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/',parameters('workspaceResourceGroupName'), '/providers/','Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]",
             "SourceId": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/',parameters('workspaceResourceGroupName'), '/providers/','Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]",
             "Type": "ResultCount"
