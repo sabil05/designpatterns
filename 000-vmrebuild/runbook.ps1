@@ -25,7 +25,7 @@ if ($WebhookData)
         $ResourceType = ($alertTargetIdArray)[6] + "/" + ($alertTargetIdArray)[7]
         $ResourceName = ($alertTargetIdArray)[-1]
         $status = $Essentials.monitorCondition
-        $alertCI = ((($AlertContext.AffectedConfigurationItems)[0]).Split("/"))[-1]
+        $alertCI = (($.Essentials.alertName).Split("-"))[-1]
         #Write-Verbose "Configuration Item: $alertCIs" -Verbose
         Write-Verbose "Configuration Item: $alertCI" -Verbose
     }
@@ -94,15 +94,18 @@ if ($WebhookData)
             if (!($alertCI -eq $null)) {
                 Write-Verbose "Getting the VM = $alertCI" -Verbose
                 $oldvm = Get-AzureRmVm -Name $alertCI -ResourceGroupName $ResourceGroupName
+                $oldvm
+                Write-Verbose "Deleting old VM ($oldvm.Name)" -Verbose
+                Remove-AzureRmVM -Name $oldvm.Name -ResourceGroupName $ResourceGroupName -Force
             } elseif (!((Get-AzureRmVm -Name "RebuildableVM01" -ResourceGroupName "RG-WE-RebuildableVMs") -eq $null )) {
                 Write-Verbose "Taking default VM = RebuildableVM01" -Verbose
                 $oldvm = Get-AzureRmVm -Name "RebuildableVM01" -ResourceGroupName "RG-WE-RebuildableVMs"
+                $oldvm
+                Write-Verbose "Deleting old VM ($oldvm.Name)" -Verbose
+                Remove-AzureRmVM -Name $oldvm.Name -ResourceGroupName $ResourceGroupName -Force
             } else {
                 Write-Error "NO VM TO REBUILD"
             }
-            $oldvm
-            Write-Verbose "Deleting old VM ($oldvm.Name)" -Verbose
-            Remove-AzureRmVM -Name $oldvm.Name -ResourceGroupName $ResourceGroupName -Force
             #$azureLocation              = $vm.Location
             #$azureResourceGroup         = $vm.ResourceGroupName
             #$azureVmName                = $vm.Name
