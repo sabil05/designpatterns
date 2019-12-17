@@ -336,9 +336,76 @@
         "automationAccountID": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/',parameters('workspaceResourceGroupName'), '/providers/','Microsoft.Automation/automationAccounts/', parameters('automationAccountName'))]",
         "runbookScriptUri": "https://raw.githubusercontent.com/zhjuve/designpatterns/master/000-vmrebuild/runbook.ps1",
         "webhookURI": "https://s2events.azure-automation.net/webhooks?token=ho%2blNtQNVVvNzQ1ZLvQ8MivDbQGUHT%2bTjnnN1tgFrzw%3d",
-        "webhookRRB": "AlertForRebuildRunbook"
+        "webhookRRB": "AlertForRebuildRunbook",
+        "AzureRM.Profile": {
+            "name": "AzureRm.Profile",
+            "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.profile.5.8.3.nupkg"
+        },
+        "psModules": [
+            {
+                "name": "AzureRM.Compute",
+                "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.compute.5.9.1.nupkg"
+            },
+            {
+                "name": "AzureRm.Resources",
+                "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.resources.6.7.3.nupkg"
+            },
+            {
+                "name": "AzureRm.KeyVault",
+                "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.keyvault.2.8.0.nupkg"
+            },
+            {
+                "name": "AzureRm.Automation",
+                "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.automation.6.1.1.nupkg"
+            },
+            {
+                "name": "AzureRm.OperationalInsights",
+                "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.operationalinsights.2.8.0.nupkg"
+            },
+            {
+                "name": "AzureRm.Insights",
+                "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.insights.5.1.5.nupkg"
+            }
+        ],
     },
     "resources": [
+        {
+            "comments": "provision the AzureRM.Profile module first since others are depenedent on it",
+            "name": "[concat(parameters('automationAccountName'), '/', variables('AzureRM.Profile').name)]",
+            "type": "Microsoft.Automation/automationAccounts/modules",
+            "apiVersion": "2015-10-31",
+            "tags": {
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Automation/automationAccounts', parameters('automationAccountName'))]"
+            ],
+            "properties": {
+                "contentLink": {
+                    "uri": "[variables('AzureRM.Profile').url]"
+                }
+            }
+        },
+        {
+            "name": "[concat(parameters('automationAccountName'), '/', variables('psModules')[copyIndex()].name)]",
+            "type": "Microsoft.Automation/automationAccounts/modules",
+            "apiVersion": "2015-10-31",
+            "tags": {
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Automation/automationAccounts', parameters('automationAccountName'))]",
+                "[variables('AzureRM.Profile').name]"
+            ],
+            "copy": {
+                "name": "modulesLoop",
+                "count": "[length(variables('psModules'))]"
+            },
+            "properties": {
+                "contentLink": {
+                    "uri": "[variables('psModules')[copyIndex()].url]"
+                }
+            }
+        },
+
         {
             "name": "[concat(parameters('automationAccountName'), '/', parameters('rebuildRunBookName'))]",
             "type": "Microsoft.Automation/automationAccounts/runbooks",
@@ -434,7 +501,7 @@
                 "azureAppPushReceivers": [
                 ],
                 "automationRunbookReceivers": [
- 
+
 
                 ],
                 "voiceReceivers": [
