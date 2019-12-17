@@ -359,8 +359,12 @@
                 "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.automation.6.1.1.nupkg"
             },
             {
-                "name": "AzureRm.Insights",
-                "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.insights.5.1.5.nupkg"
+                "name": "Az.Accounts",
+                "url": "https://devopsgallerystorage.blob.core.windows.net/packages/az.accounts.1.6.5.nupkg"
+            },
+            {
+                "name": "LogAnalyticsAlert",
+                "url": "https://devopsgallerystorage.blob.core.windows.net/packages/loganalyticsalerts.2.0.2.nupkg"
             }
         ]
     },
