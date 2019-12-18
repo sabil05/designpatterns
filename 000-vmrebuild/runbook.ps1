@@ -96,20 +96,21 @@ if ($WebhookData)
             if (!($alertCI -eq $null)) {
                 #disable alert rule to avoid false positives
                 Write-Verbose "Disanling Alert Rule = $alertRule" -Verbose
-		$SubscriptionId = $context.Subscription
-		$cache = $context.TokenCache
-		$cacheItem = $cache.ReadItems()
-		$AccessToken=$cacheItem[$cacheItem.Count -1].AccessToken
-		$headerParams = @{'Authorization'="Bearer $AccessToken"}
-		$url="https://management.azure.com/subscriptions/$SubscriptionId/resourceGroups/$ResourceGroupName/providers/microsoft.insights/scheduledQueryRules/$alertRule?api-version=2018-04-16"
-		$rBody = @{
-			'properties' = @{
-				'enabled' = 'false'
-			}
-		}
-		$json = $rBody | ConvertTo-Json
-		$results=Invoke-RestMethod -Uri $url -Headers $headerParams -Method Patch -Body $json -ContentType 'application/json'
-		$results
+                $context = Get-AzureRmContext
+                $SubscriptionId = $context.Subscription
+				$cache = $context.TokenCache
+				$cacheItem = $cache.ReadItems()
+				$AccessToken=$cacheItem[$cacheItem.Count -1].AccessToken
+				$headerParams = @{'Authorization'="Bearer $AccessToken"}
+				$url="https://management.azure.com/subscriptions/$SubscriptionId/resourceGroups/$ResourceGroupName/providers/microsoft.insights/scheduledQueryRules/$alertRule?api-version=2018-04-16"
+				$rBody = @{
+					'properties' = @{
+						'enabled' = 'false'
+					}
+				}
+				$json = $rBody | ConvertTo-Json
+				$results=Invoke-RestMethod -Uri $url -Headers $headerParams -Method Patch -Body $json -ContentType 'application/json'
+				$results
                 #get old VM config
                 Write-Verbose "Getting the VM = $alertCI" -Verbose
                 $oldvm = Get-AzureRmVm -Name $alertCI -ResourceGroupName $ResourceGroupName
