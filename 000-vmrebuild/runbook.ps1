@@ -102,7 +102,7 @@ if ($WebhookData)
 				$cacheItem = $cache.ReadItems()
 				$AccessToken=$cacheItem[$cacheItem.Count -1].AccessToken
 				$headerParams = @{'Authorization'="Bearer $AccessToken"}
-				$url="https://management.azure.com/subscriptions/$SubscriptionId/resourceGroups/$ResourceGroupName/providers/microsoft.insights/scheduledQueryRules/$alertRule?api-version=2018-04-16"
+				$url="https://management.azure.com/subscriptions/$SubscriptionId/resourceGroups/$ResourceGroupName/providers/microsoft.insights/scheduledQueryRules/$alertRule"+"?api-version=2018-04-16"
 				$rBody = @{
 					'properties' = @{
 						'enabled' = 'false'
