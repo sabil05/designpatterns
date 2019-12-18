@@ -142,7 +142,7 @@
         },
         "workspaceName": {
             "type": "String",
-            "defaultValue": "LA-WE-HeartBeatWorkspace",
+            "defaultValue": "LA-WE-HeartBeatWorkspaceWithData",
             "metadata": {
                 "description": "Specifies the name of the workspace."
             }
@@ -634,7 +634,7 @@
                         {
                             "name": "[concat(parameters('vmName'), '_Data2')]",
                             "diskSizeGB": 32,
-                            "lun": 0,
+                            "lun": 1,
                             "createOption": "Empty"
                         }
                     ]
