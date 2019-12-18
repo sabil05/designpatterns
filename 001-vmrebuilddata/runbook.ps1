@@ -96,6 +96,7 @@ if ($WebhookData)
             if (!($alertCI -eq $null)) {
                 #disable alert rule to avoid false positives
                 Write-Verbose "Disanling Alert Rule = $alertRule" -Verbose
+                $context = Get-AzureRmContext
 		$SubscriptionId = $context.Subscription
 		$cache = $context.TokenCache
 		$cacheItem = $cache.ReadItems()
