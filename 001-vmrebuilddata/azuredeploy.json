@@ -18,7 +18,7 @@
         },
         "vmName": {
             "type": "string",
-            "defaultValue": "RebuildableVM01",
+            "defaultValue": "RebuildableVMWithData01",
             "metadata": {
                 "description": "Name for the Virtual Machine."
             }
@@ -49,7 +49,7 @@
         },
         "vmSize": {
             "type": "string",
-            "defaultValue": "Standard_A2_v2",
+            "defaultValue": "Standard_B2s",
             "metadata": {
                 "description": "Size for the Virtual Machine."
             }
@@ -91,7 +91,7 @@
         },
         "virtualNetworkName": {
             "type": "string",
-            "defaultValue": "VN-WE-RebuildableVMs",
+            "defaultValue": "VN-WE-RebuildableVMswithdata",
             "metadata": {
                 "description": "Name of the virtual network"
             }
@@ -204,7 +204,7 @@
         },
         "actionGroupName": {
             "type": "string",
-            "defaultValue": "AG-RebuildRunBook",
+            "defaultValue": "AG-RebuildRunBookWithData",
             "minLength": 1,
             "metadata": {
                 "description": "Name for the Action group."
@@ -212,7 +212,7 @@
         },
         "actionGroupShortName": {
             "type": "string",
-            "defaultValue": "AG-RRB",
+            "defaultValue": "AG-RRBD",
             "minLength": 1,
             "maxLength": 12,
             "metadata": {
@@ -226,17 +226,9 @@
                 "description": "Email address."
             }
         },
-        "activityLogAlertName": {
-            "type": "string",
-            "defaultValue": "AR-AzureServiceAlerts",
-            "minLength": 1,
-            "metadata": {
-                "description": "Name for the Azure Service Health alert rule."
-            }
-        },
         "logSearchAlertRuleName": {
             "type": "string",
-            "defaultValue": "AR-HeartbeatsLost",
+            "defaultValue": "AR-HeartbeatsLostWithData",
             "minLength": 1,
             "metadata": {
                 "description": "Name for the log search alert rule."
@@ -244,14 +236,14 @@
         },
         "automationAccountName": {
             "type": "string",
-            "defaultValue": "AA-WE-RebuildableVMRunbooks1",
+            "defaultValue": "AA-WE-RebuildableVMRunbooksWithData",
             "metadata": {
                 "description": "Provide the name of Automation Account"
             }
         },
         "rebuildRunBookName": {
             "type": "string",
-            "defaultValue": "RebuildRunbook",
+            "defaultValue": "RebuildRunbookWithData",
             "metadata": {
                 "description": "Provide the name of rebuild runbook"
             }
@@ -511,36 +503,6 @@
                 ],
                 "armRoleReceivers": [
                 ]
-            }
-        },
-        {
-            "type": "Microsoft.Insights/activityLogAlerts",
-            "apiVersion": "2017-04-01",
-            "name": "[parameters('activityLogAlertName')]",
-            "location": "Global",
-            "dependsOn": [
-                "[parameters('actionGroupName')]"
-            ],
-            "properties": {
-                "enabled": true,
-                "scopes": [
-                    "[subscription().id]"
-                ],
-                "condition": {
-                    "allOf": [
-                        {
-                            "field": "category",
-                            "equals": "ServiceHealth"
-                        }
-                    ]
-                },
-                "actions": {
-                    "actionGroups": [
-                        {
-                            "actionGroupId": "[resourceId('Microsoft.Insights/actionGroups', parameters('actionGroupName'))]"
-                        }
-                    ]
-                }
             }
         },
         {
