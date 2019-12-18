@@ -219,14 +219,6 @@
                 "description": "Email address."
             }
         },
-        "activityLogAlertName": {
-            "type": "string",
-            "defaultValue": "AR-AzureServiceAlerts",
-            "minLength": 1,
-            "metadata": {
-                "description": "Name for the Azure Service Health alert rule."
-            }
-        },
         "logSearchAlertRuleName": {
             "type": "string",
             "defaultValue": "AR-HeartbeatsLost",
