@@ -627,7 +627,13 @@
                     "dataDisks": [
                         {
                             "name": "[concat(parameters('vmName'), '_Data1')]",
-                            "diskSizeGB": 10,
+                            "diskSizeGB": 32,
+                            "lun": 0,
+                            "createOption": "Empty"
+                        },
+                        {
+                            "name": "[concat(parameters('vmName'), '_Data2')]",
+                            "diskSizeGB": 32,
                             "lun": 0,
                             "createOption": "Empty"
                         }
