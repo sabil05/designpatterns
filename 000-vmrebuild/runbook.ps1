@@ -99,11 +99,12 @@ if ($WebhookData)
                 Write-Verbose "Deleting old VM ($oldvm.Name)" -Verbose
                 Remove-AzureRmVM -Name $oldvm.Name -ResourceGroupName $ResourceGroupName -Force
             } elseif (!((Get-AzureRmVm -Name "RebuildableVM01" -ResourceGroupName "RG-WE-RebuildableVMs") -eq $null )) {
-                Write-Verbose "Taking default VM = RebuildableVM01" -Verbose
-                $oldvm = Get-AzureRmVm -Name "RebuildableVM01" -ResourceGroupName "RG-WE-RebuildableVMs"
+                # test use only
+                Write-Verbose "Taking default VM = RebuidableVM01test" -Verbose
+                $oldvm = Get-AzureRmVm -Name "RebuildableVM01test" -ResourceGroupName "RG-WE-RebuildableVMs"
                 $oldvm
                 Write-Verbose "Deleting old VM ($oldvm.Name)" -Verbose
-                Remove-AzureRmVM -Name $oldvm.Name -ResourceGroupName $ResourceGroupName -Force
+                Remove-AzureRmVM -Name $oldvm.Name -ResourceGroupName "RG-WE-RebuildableVMs" -Force
             } else {
                 Write-Error "NO VM TO REBUILD"
             }
@@ -112,9 +113,9 @@ if ($WebhookData)
             #$azureVmName                = $vm.Name
             #$azureVmOsDiskName          = $vm.StorageProfile.OsDisk.Name
             #$azureVmSize                = $vm.HardwareProfile.VmSize
-            $osDisk = Get-AzureDisk -DiskName $oldvm.StorageProfile.OsDisk.Name
+            $osDisk = Get-AzureRmDisk -DiskName $oldvm.StorageProfile.OsDisk.Name -ResourceGroupName $oldvm.ResourceGroupName
             $osDisk
-            $vmConfig = New-AzureVMConfig -VMName $oldvm.Name -VMSize $oldvm.HardwareProfile.VmSize
+            $vmConfig = New-AzureRmVMConfig -VMName $oldvm.Name -VMSize $oldvm.HardwareProfile.VmSize
             $vmConfig
             $vm = Add-AzureRmVMNetworkInterface -VM $vmConfig -Id $oldvm.NetworkProfile.NetworkInterfaces.Id
             $vm
@@ -126,40 +127,7 @@ if ($WebhookData)
         {
             # This is an Resource Manager VM
             Write-Verbose "This is an Resource Manager VM." -Verbose
-
-            # Authenticate to Azure with service principal and certificate and set subscription
-            Write-Verbose "Authenticating to Azure with service principal and certificate" -Verbose
-            $ConnectionAssetName = "AzureRunAsConnection"
-            Write-Verbose "Get connection asset: $ConnectionAssetName" -Verbose
-            $Conn = Get-AutomationConnection -Name $ConnectionAssetName
-            if ($Conn -eq $null)
-            {
-                throw "Could not retrieve connection asset: $ConnectionAssetName. Check that this asset exists in the Automation account."
-            }
-            Write-Verbose "Authenticating to Azure with service principal." -Verbose
-            Add-AzureRMAccount -ServicePrincipal -Tenant $Conn.TenantID -ApplicationId $Conn.ApplicationID -CertificateThumbprint $Conn.CertificateThumbprint | Write-Verbose
-            Write-Verbose "Setting subscription to work against: $SubId" -Verbose
-            Set-AzureRmContext -SubscriptionId $SubId -ErrorAction Stop | Write-Verbose
-
-            # Stop the Resource Manager VM
-            Write-Verbose "Stopping the VM - $ResourceName - in resource group - $ResourceGroupName -" -Verbose
-            #Stop-AzureRmVM -Name $ResourceName -ResourceGroupName $ResourceGroupName -Force
-            #Start-AzureRmVM -Name $ResourceName -ResourceGroupName $ResourceGroupName
-            $vm = Get-AzureRmVm -Name $ResourceName -ResourceGroupName $ResourceGroupName
-            Write-Verbose "Getting VM details... for $ResourceName" -Verbose
-            #$vm
-            # get 
-            #$diagSa = [regex]::match($vm.DiagnosticsProfile.bootDiagnostics.storageUri, '^http[s]?://(.+?)\.').groups[1].value
-            #Write-Verbose "Diagnostic storage container for $ResourceName :" -Verbose
-            #Write-Verbose "$diagSa" -Verbose
-            # get VM parameters
-            $azureLocation              = $vm.Location
-            $azureResourceGroup         = $vm.ResourceGroupName
-            $azureVmName                = $vm.Name
-            $azureVmOsDiskName          = $vm.StorageProfile.OsDisk.Name
-            $azureVmSize                = $vm.HardwareProfile.VmSize
-            # get nic
-
+            #future use
         }
         else {
             # ResourceType not supported
