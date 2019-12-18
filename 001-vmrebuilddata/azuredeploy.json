@@ -342,10 +342,6 @@
         },
         "psModules": [
             {
-                "name": "Azure",
-                "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.compute.5.3.0.nupkg"
-            },
-            {
                 "name": "AzureRM.Compute",
                 "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.compute.5.9.1.nupkg"
             },
