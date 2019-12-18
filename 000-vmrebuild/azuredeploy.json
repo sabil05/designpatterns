@@ -506,37 +506,7 @@
                 ]
             }
         },
-        {
-            "type": "Microsoft.Insights/activityLogAlerts",
-            "apiVersion": "2017-04-01",
-            "name": "[parameters('activityLogAlertName')]",
-            "location": "Global",
-            "dependsOn": [
-                "[parameters('actionGroupName')]"
-            ],
-            "properties": {
-                "enabled": true,
-                "scopes": [
-                    "[subscription().id]"
-                ],
-                "condition": {
-                    "allOf": [
-                        {
-                            "field": "category",
-                            "equals": "ServiceHealth"
-                        }
-                    ]
-                },
-                "actions": {
-                    "actionGroups": [
-                        {
-                            "actionGroupId": "[resourceId('Microsoft.Insights/actionGroups', parameters('actionGroupName'))]"
-                        }
-                    ]
-                }
-            }
-        },
-        {
+       {
             "condition": "[equals(parameters('vmNewOrExisting'), 'new')]",
             "type": "Microsoft.Compute/virtualMachines/extensions",
             "name": "[concat(parameters('vmName'), '/Microsoft.EnterpriseCloud.Monitoring')]",
