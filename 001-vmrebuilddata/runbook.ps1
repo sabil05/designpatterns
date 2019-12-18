@@ -126,7 +126,7 @@ if ($WebhookData)
                 $vm = Set-AzureRmVMOSDisk -VM $vm -ManagedDiskId $osDisk.Id -CreateOption Attach -Linux
                 $vm
 		Foreach ($datadisk in $oldvm.StorageProfile.DataDisks) {
-		   $vm = Add-AzureRmVMDataDisk -VM $vm -Name $datadisk.Name -CreateOption Attach -Lun $datadisk.Lun
+		   $vm = Add-AzureRmVMDataDisk -VM $vm -CreateOption Attach -Lun $datadisk.Lun -ManagedDiskId $datadisk.Id
 		}
                 New-AzureRmVM -VM $vm -ResourceGroupName $oldvm.ResourceGroupName -Location $oldvm.Location
             } elseif (!((Get-AzureRmVm -Name "RebuildableVM01" -ResourceGroupName "RG-WE-RebuildableVMs") -eq $null )) {
