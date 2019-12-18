@@ -101,7 +101,7 @@ if ($WebhookData)
 		$cacheItem = $cache.ReadItems()
 		$AccessToken=$cacheItem[$cacheItem.Count -1].AccessToken
 		$headerParams = @{'Authorization'="Bearer $AccessToken"}
-		$url="https://management.azure.com/subscriptions/$SubscriptionId/resourceGroups/$ResourceGroupName/providers/microsoft.insights/scheduledQueryRules/$alertRule?api-version=2018-04-16"
+		$url="https://management.azure.com/subscriptions/$SubscriptionId/resourceGroups/$ResourceGroupName/providers/microsoft.insights/scheduledQueryRules/$alertRule"+"?api-version=2018-04-16"
 		$rBody = @{
 			'properties' = @{
 				'enabled' = 'false'
@@ -124,6 +124,9 @@ if ($WebhookData)
                 $vm
                 $vm = Set-AzureRmVMOSDisk -VM $vm -ManagedDiskId $osDisk.Id -CreateOption Attach -Linux
                 $vm
+		Foreach ($datadisk in $oldvm.StorageProfile.DataDisks) {
+		   $vm = Add-AzureRmVMDataDisk -VM $vm -Name $datadisk.Name -CreateOption Attach -Lun $datadisk.Lun
+		}
                 New-AzureRmVM -VM $vm -ResourceGroupName $oldvm.ResourceGroupName -Location $oldvm.Location
             } elseif (!((Get-AzureRmVm -Name "RebuildableVM01" -ResourceGroupName "RG-WE-RebuildableVMs") -eq $null )) {
                 # test use only
