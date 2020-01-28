@@ -641,7 +641,7 @@
         },
         "VMUUID": {
             "type": "string",
-            "value": "[variables('vmresID')]"
+            "value": "[reference(variables('vmresID'), '2015-11-01-preview').VmId]"
         }
     }
 }
