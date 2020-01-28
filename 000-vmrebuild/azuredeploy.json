@@ -300,6 +300,7 @@
             }
         },
         "workspaceID": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/',parameters('workspaceResourceGroupName'), '/providers/','Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]",
+        "vmresID": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/',resourceGroup().name, '/providers/','Microsoft.Compute/virtualmachines/', parameters('vmName'))]",
         "alertName": "[parameters('logSearchAlertRuleName')]",
         "alertDescr": "Sample log search alert",
         "alertStatus": "false",
@@ -637,6 +638,10 @@
         "webhookURI": {
             "type": "string",
             "value": "[variables('webhookURI')]"
+        },
+        "VMUUID": {
+            "type": "string",
+            "value": "[variables('vmresID')]"
         }
     }
 }
