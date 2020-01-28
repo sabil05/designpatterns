@@ -318,7 +318,7 @@
         },
         "alertSchedule": {
             "Frequency": 5,
-            "Time": 10
+            "Time": 5
         },
         "alertActions": {
             "SeverityLevel": "1",
@@ -326,7 +326,7 @@
         },
         "alertTrigger": {
             "Operator": "LessThan",
-            "Threshold": "6"
+            "Threshold": "4"
         },
         "actionGrp": {
             "ActionGroup": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/',parameters('workspaceResourceGroupName'), '/providers/','microsoft.insights/actiongroups/', parameters('actionGroupName'))]",
