@@ -21,15 +21,20 @@ if ($WebhookData)
         # Get the first target only as this script doesn't handle multiple
         $alertTargetIdArray = (($Essentials.alertTargetIds)[0]).Split("/")
         $SubId = ($alertTargetIdArray)[2]
-        $ResourceGroupName = ($alertTargetIdArray)[4]
+        #$ResourceGroupName = ($alertTargetIdArray)[4]
+        $ResourceGroupName = (($alertQuery).Split("//"))[2]
+        $ResourceGroupName 
         $ResourceType = ($alertTargetIdArray)[6] + "/" + ($alertTargetIdArray)[7]
         $ResourceName = ($alertTargetIdArray)[-1]
         $status = $Essentials.monitorCondition
+        $alertQuery = $AlertContext.SearchQuery
         $alertRule = $Essentials.alertRule
         $alertCI = (($alertRule).Split("-"))[-1]
+        $alertCIUUID = (($alertQuery).Split("//"))[1]
         #Write-Verbose "Configuration Item: $alertCIs" -Verbose
         Write-Verbose "Configuration Item: $alertCI" -Verbose
         $alertCI
+        $alertCIUUID
     }
     elseif ($schemaId -eq "AzureMonitorMetricAlert") {
         # This is the near-real-time Metric Alert schema
@@ -93,7 +98,8 @@ if ($WebhookData)
             # Find out VM name from Affected Configuration Items array
             #Stop-AzureRmVM -Name $ResourceName -ResourceGroupName $ResourceGroupName -Force
             #Start-AzureRmVM -Name $ResourceName -ResourceGroupName $ResourceGroupName
-            if (!($alertCI -eq $null)) {
+            #if (!($alertCI -eq $null)) {
+            if (!($alertCIUUID -eq $null)) {
                 #disable alert rule to avoid false positives
                 #Write-Verbose "Disanling Alert Rule = $alertRule" -Verbose
                 #$context = Get-AzureRmContext
@@ -113,23 +119,25 @@ if ($WebhookData)
 				#$results
 
                 #check VM activity logs for write actions (meaning that VM has been e.g. rebuilt)
-                $vmlog = Get-AzLog -ResourceGroupName RG-WE-REBUILDABLEVMS -starttime (get-date).addminutes(-10) | where-object {($_.Authorization.Action -eq "microsoft.compute/virtualmachines/write") -and (($_.ResourceId).Split("/")[-1] -eq $alertCI)}
-                
+                $oldVm = Get-AzureRmVm -ResourceGroupName $ResourceGroupName | where-object {$_.VmId -eq $alertCIUUID}
+                $vmlog = Get-AzLog -ResourceGroupName $ResourceGroupName -starttime (get-date).addminutes(-10) | where-object {($_.Authorization.Action -eq "microsoft.compute/virtualmachines/write") -and (($_.ResourceId).Split("/")[-1] -eq $oldVm.Name)}
+                if ($vmlog.Count -eq) {
+                    Remove-AzureRmVM -Name $oldvm.Name -ResourceGroupName $ResourceGroupName -Force
+                    $osDisk = Get-AzureRmDisk -DiskName $oldvm.StorageProfile.OsDisk.Name -ResourceGroupName $oldvm.ResourceGroupName
+                    $osDisk
+                    $vmConfig = New-AzureRmVMConfig -VMName $oldvm.Name -VMSize $oldvm.HardwareProfile.VmSize
+                    $vmConfig
+                    $vm = Add-AzureRmVMNetworkInterface -VM $vmConfig -Id $oldvm.NetworkProfile.NetworkInterfaces.Id
+                    $vm
+                    $vm = Set-AzureRmVMOSDisk -VM $vm -ManagedDiskId $osDisk.Id -CreateOption Attach -Linux
+                    $vm
+                    New-AzureRmVM -VM $vm -ResourceGroupName $oldvm.ResourceGroupName -Location $oldvm.Location
+                }
                 #get old VM config
-                Write-Verbose "Getting the VM = $alertCI" -Verbose
-                $oldvm = Get-AzureRmVm -Name $alertCI -ResourceGroupName $ResourceGroupName
-                $oldvm
-                Write-Verbose "Deleting old VM ($oldvm.Name)" -Verbose
-                Remove-AzureRmVM -Name $oldvm.Name -ResourceGroupName $ResourceGroupName -Force
-                $osDisk = Get-AzureRmDisk -DiskName $oldvm.StorageProfile.OsDisk.Name -ResourceGroupName $oldvm.ResourceGroupName
-                $osDisk
-                $vmConfig = New-AzureRmVMConfig -VMName $oldvm.Name -VMSize $oldvm.HardwareProfile.VmSize
-                $vmConfig
-                $vm = Add-AzureRmVMNetworkInterface -VM $vmConfig -Id $oldvm.NetworkProfile.NetworkInterfaces.Id
-                $vm
-                $vm = Set-AzureRmVMOSDisk -VM $vm -ManagedDiskId $osDisk.Id -CreateOption Attach -Linux
-                $vm
-                New-AzureRmVM -VM $vm -ResourceGroupName $oldvm.ResourceGroupName -Location $oldvm.Location
+                #Write-Verbose "Getting the VM = $alertCI" -Verbose
+                #$oldvm = Get-AzureRmVm -Name $alertCI -ResourceGroupName $ResourceGroupName
+                #$oldvm
+                #Write-Verbose "Deleting old VM ($oldvm.Name)" -Verbose
             } elseif (!((Get-AzureRmVm -Name "RebuildableVM01" -ResourceGroupName "RG-WE-RebuildableVMs") -eq $null )) {
                 # test use only
                 Write-Verbose "Taking default VM = RebuidableVM01test" -Verbose
