@@ -95,22 +95,26 @@ if ($WebhookData)
             #Start-AzureRmVM -Name $ResourceName -ResourceGroupName $ResourceGroupName
             if (!($alertCI -eq $null)) {
                 #disable alert rule to avoid false positives
-                Write-Verbose "Disanling Alert Rule = $alertRule" -Verbose
-                $context = Get-AzureRmContext
-                $SubscriptionId = $context.Subscription
-				$cache = $context.TokenCache
-				$cacheItem = $cache.ReadItems()
-				$AccessToken=$cacheItem[$cacheItem.Count -1].AccessToken
-				$headerParams = @{'Authorization'="Bearer $AccessToken"}
-				$url="https://management.azure.com/subscriptions/$SubscriptionId/resourceGroups/$ResourceGroupName/providers/microsoft.insights/scheduledQueryRules/$alertRule"+"?api-version=2018-04-16"
-				$rBody = @{
-					'properties' = @{
-						'enabled' = 'false'
-					}
-				}
-				$json = $rBody | ConvertTo-Json
-				$results=Invoke-RestMethod -Uri $url -Headers $headerParams -Method Patch -Body $json -ContentType 'application/json'
-				$results
+                #Write-Verbose "Disanling Alert Rule = $alertRule" -Verbose
+                #$context = Get-AzureRmContext
+                #$SubscriptionId = $context.Subscription
+				#$cache = $context.TokenCache
+				#$cacheItem = $cache.ReadItems()
+				#$AccessToken=$cacheItem[$cacheItem.Count -1].AccessToken
+				#$headerParams = @{'Authorization'="Bearer $AccessToken"}
+				#$url="https://management.azure.com/subscriptions/$SubscriptionId/resourceGroups/$ResourceGroupName/providers/microsoft.insights/scheduledQueryRules/$alertRule"+"?api-version=2018-04-16"
+				#$rBody = @{
+				#	'properties' = @{
+				#		'enabled' = 'false'
+				#	}
+				#}
+				#$json = $rBody | ConvertTo-Json
+				#$results=Invoke-RestMethod -Uri $url -Headers $headerParams -Method Patch -Body $json -ContentType 'application/json'
+				#$results
+
+                #check VM activity logs for write actions (meaning that VM has been e.g. rebuilt)
+                $vmlog = Get-AzLog -ResourceGroupName RG-WE-REBUILDABLEVMS -starttime (get-date).addminutes(-10) | where-object {($_.Authorization.Action -eq "microsoft.compute/virtualmachines/write") -and (($_.ResourceId).Split("/")[-1] -eq $alertCI)}
+                
                 #get old VM config
                 Write-Verbose "Getting the VM = $alertCI" -Verbose
                 $oldvm = Get-AzureRmVm -Name $alertCI -ResourceGroupName $ResourceGroupName
