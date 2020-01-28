@@ -284,6 +284,13 @@
             "metadata": {
                 "description": "Pricing tier: Free or Basic"
             }
+        },
+        "alertGUID": {
+            "type": "string",
+            "defaultValue": "[newGuid()]",
+            "metadata": {
+                "description": "GUID for new alert, DO NOT CHANGE"
+            }
         }
     },
     "variables": {
@@ -421,7 +428,7 @@
         },
 
         {
-            "name": "[concat(variables('alertName'),'-',parameters('vmName'),'-',newGuid())]",
+            "name": "[concat(variables('alertName'),'-',parameters('vmName'),'-',parameters('alertGUID'))]",
             "type": "Microsoft.Insights/scheduledQueryRules",
             "apiVersion": "2018-04-16",
             "location": "[parameters('location')]",
