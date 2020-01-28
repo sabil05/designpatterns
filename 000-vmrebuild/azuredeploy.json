@@ -440,7 +440,7 @@
                 "description": "[variables('alertDescr')]",
                 "enabled": "[variables('alertStatus')]",
                 "source": {
-                    "query": "[concat('Heartbeat | where VMUUID == \"',reference(variables('vmresID'), '2017-03-30').VmId,'\"')]",
+                    "query": "[concat('Heartbeat | where VMUUID == substring(\"',reference(variables('vmresID'), '2017-03-30').VmId,'\",19,17)')]",
                     "authorizedResources": "[concat(array(variables('alertSource').Resource1))]",
                     "dataSourceId": "[variables('alertSource').SourceId]",
                     "queryType": "[variables('alertSource').Type]"
