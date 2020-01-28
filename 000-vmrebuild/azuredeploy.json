@@ -301,12 +301,10 @@
         },
         "workspaceID": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/',parameters('workspaceResourceGroupName'), '/providers/','Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]",
         "vmresID": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/',resourceGroup().name, '/providers/','Microsoft.Compute/virtualmachines/', parameters('vmName'))]",
-        "vmuuid": [reference(variables('vmresID'), '2017-03-30').VmId],
         "alertName": "[parameters('logSearchAlertRuleName')]",
         "alertDescr": "Sample log search alert",
         "alertStatus": "false",
         "alertSource": {
-            "Query": "[concat('Heartbeat | where Computer == \"',variables('vmuuid'),'\"')]",
             "Resource1": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/',parameters('workspaceResourceGroupName'), '/providers/','Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]",
             "SourceId": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/',parameters('workspaceResourceGroupName'), '/providers/','Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]",
             "Type": "ResultCount"
@@ -423,7 +421,7 @@
         },
 
         {
-            "name": "[concat(variables('alertName'),'-',parameters('vmName'),'-',variables('vmuuid'))]",
+            "name": "[concat(variables('alertName'),'-',parameters('vmName'),'-',reference(variables('vmresID'), '2017-03-30').VmId)]",
             "type": "Microsoft.Insights/scheduledQueryRules",
             "apiVersion": "2018-04-16",
             "location": "[parameters('location')]",
@@ -435,7 +433,7 @@
                 "description": "[variables('alertDescr')]",
                 "enabled": "[variables('alertStatus')]",
                 "source": {
-                    "query": "[variables('alertSource').Query]",
+                    "query": "[concat('Heartbeat | where VMUUID == \"',reference(variables('vmresID'), '2017-03-30').VmId,'\"')]",
                     "authorizedResources": "[concat(array(variables('alertSource').Resource1))]",
                     "dataSourceId": "[variables('alertSource').SourceId]",
                     "queryType": "[variables('alertSource').Type]"
