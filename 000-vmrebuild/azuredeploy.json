@@ -421,7 +421,7 @@
         },
 
         {
-            "name": "[concat(variables('alertName'),'-',parameters('vmName'),'-',reference(variables('vmresID'), '2017-03-30').VmId)]",
+            "name": "[concat(variables('alertName'),'-',parameters('vmName'),'-',newGuid())]",
             "type": "Microsoft.Insights/scheduledQueryRules",
             "apiVersion": "2018-04-16",
             "location": "[parameters('location')]",
