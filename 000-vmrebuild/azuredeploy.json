@@ -135,7 +135,7 @@
         },
         "workspaceName": {
             "type": "String",
-            "defaultValue": "LA-WE-HeartBeatWorkspace",
+            "defaultValue": "LA-WE-HeartBeatWorkspace1",
             "metadata": {
                 "description": "Specifies the name of the workspace."
             }
@@ -641,7 +641,7 @@
         },
         "VMUUID": {
             "type": "string",
-            "value": "[reference(variables('vmresID'), '2015-11-01-preview').VmId]"
+            "value": "[reference(variables('vmresID'), '2017-03-30').VmId]"
         }
     }
 }
