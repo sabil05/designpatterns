@@ -301,11 +301,12 @@
         },
         "workspaceID": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/',parameters('workspaceResourceGroupName'), '/providers/','Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]",
         "vmresID": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/',resourceGroup().name, '/providers/','Microsoft.Compute/virtualmachines/', parameters('vmName'))]",
+        "vmuuid": [reference(variables('vmresID'), '2017-03-30').VmId],
         "alertName": "[parameters('logSearchAlertRuleName')]",
         "alertDescr": "Sample log search alert",
         "alertStatus": "false",
         "alertSource": {
-            "Query": "[concat('Heartbeat | where Computer == \"',parameters('vmName'),'\"')]",
+            "Query": "[concat('Heartbeat | where Computer == \"',variables('vmuuid'),'\"')]",
             "Resource1": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/',parameters('workspaceResourceGroupName'), '/providers/','Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]",
             "SourceId": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/',parameters('workspaceResourceGroupName'), '/providers/','Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]",
             "Type": "ResultCount"
@@ -328,7 +329,7 @@
         },
         "automationAccountID": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/',parameters('workspaceResourceGroupName'), '/providers/','Microsoft.Automation/automationAccounts/', parameters('automationAccountName'))]",
         "runbookScriptUri": "https://raw.githubusercontent.com/zhjuve/designpatterns/master/000-vmrebuild/runbook.ps1",
-        "webhookURI": "https://s2events.azure-automation.net/webhooks?token=ho%2blNtQNVVvNzQ1ZLvQ8MivDbQGUHT%2bTjnnN1tgFrzw%3d",
+        "webhookURI": "nouri",
         "webhookRRB": "AlertForRebuildRunbook",
         "AzureRM.Profile": {
             "name": "AzureRm.Profile",
@@ -422,7 +423,7 @@
         },
 
         {
-            "name": "[concat(variables('alertName'),'-',parameters('vmName'))]",
+            "name": "[concat(variables('alertName'),'-',parameters('vmName'),'-',variables('vmuuid'))]",
             "type": "Microsoft.Insights/scheduledQueryRules",
             "apiVersion": "2018-04-16",
             "location": "[parameters('location')]",
