@@ -34,10 +34,12 @@ if ($WebhookData)
         #$SubId
         #$ResourceGroupName = ($alertTargetIdArray)[4]
         $ResourceGroupName = (($alertQuery).Split("//"))[2]
-        #$ResourceGroupName 
-        $alertCIUUID = (($alertQuery).Split("//"))[-1]
-        Write-Output "VM BIOS GUID (Azure VM VmId) = $alertCIUUID"
-        #$alertRule = $Essentials.alertRule
+        Write-Output "RG = $ResourceGroupName"
+        $AzureAlertCIUUID = (($alertQuery).Split("//"))[4]
+        $OSAlertCIUUID = (($alertQuery).Split("//"))[-1]
+        Write-Output "Azure VM BIOS GUID = $AzureAlertCIUUID"
+        Write-Output "OS VM BIOS GUID    = $OSAlertCIUUID"
+        $alertRule = $Essentials.alertRule
         #$alertCI = (($alertRule).Split("-"))[-1]
         #Write-Verbose "Configuration Item: $alertCIs" -Verbose
         #Write-Verbose "Configuration Item: $alertCI" -Verbose
@@ -106,7 +108,7 @@ if ($WebhookData)
             #Stop-AzureRmVM -Name $ResourceName -ResourceGroupName $ResourceGroupName -Force
             #Start-AzureRmVM -Name $ResourceName -ResourceGroupName $ResourceGroupName
             #if (!($alertCI -eq $null)) {
-            if (!($alertCIUUID -eq $null)) {
+            if (!($AzureAlertCIUUID -eq $null)) {
                 #disable alert rule to avoid false positives
                 #Write-Verbose "Disanling Alert Rule = $alertRule" -Verbose
                 #$context = Get-AzureRmContext
@@ -126,7 +128,7 @@ if ($WebhookData)
 				#$results
 
                 #check VM activity logs for write actions (meaning that VM has been e.g. rebuilt)
-                $oldVm = Get-AzureRmVm -ResourceGroupName $ResourceGroupName | where-object {$_.VmId -eq $alertCIUUID}
+                $oldVm = Get-AzureRmVm -ResourceGroupName $ResourceGroupName | where-object {$_.VmId -eq $AzureAlertCIUUID}
                 Write-Output "Old VM config captured:"
                 Write-Output "<<<<<<<<<<<<<<<<<<<<<<START OLD VM>>>>>>>>>>>>>>>>>>>>>>"
                 $oldvm
@@ -153,12 +155,43 @@ if ($WebhookData)
                     Write-Output "<<<<<<<<<<<<<<<<<<<<<<RE-CREATING VM:"
                     New-AzureRmVM -VM $vm -ResourceGroupName $oldvm.ResourceGroupName -Location $oldvm.Location -Tag $tags
                     Write-Output "///////// VM CREATION FINISHED >>>>>>>>>>>>>>>>>>>>>"
+                    #Alert Rule need to be updated because VM has been rebuilt
+                    Write-Output "///////// Alert Rule Update START >>>>>>>>>>>>>>>>>>>>>"
+                    $context = Get-AzureRmContext
+                    $SubscriptionId = $context.Subscription
+			        $cache = $context.TokenCache
+			        $cacheItem = $cache.ReadItems()
+			        $AccessToken=$cacheItem[$cacheItem.Count -1].AccessToken
+			        $headerParams = @{'Authorization'="Bearer $AccessToken"}
+			        $url="https://management.azure.com/subscriptions/$SubscriptionId/resourceGroups/$ResourceGroupName/providers/microsoft.insights/scheduledQueryRules/$alertRule"+"?api-version=2018-04-16"
+			        $results=Invoke-RestMethod -Uri $url -Headers $headerParams -Method Get -ContentType 'application/json'
+                    write-output "Old alert: /////////////////////"
+                    $results
+                    $oldq = $results.properties.source.query
+			        write-output "Old Query: $oldq"
+                    $recreatedVm = Get-AzureRmVm -ResourceGroupName $oldvm.ResourceGroupName | where-object {$_.Name -eq $oldVm.Name}
+                    $newalertCIUUID = $recreatedVm.VmId
+			        write-output "New VM ID: $newalertCIUUID"
+                    $olds = $AzureAlertCIUUID+"//"+$OSAlertCIUUID
+			        write-output "Old end: $old"
+                    $news = $newalertCIUUID+"//"+$OSAlertCIUUID
+			        write-output "New end: $new"
+                    $newq = $oldq -replace $old,$new
+                    write-output "New Query: $newq"
+                    $results.properties.source.query = $newq
+                    $results.PSObject.Properties.Remove('id')
+                    $results.PSObject.Properties.Remove('name')
+                    $results.PSObject.Properties.Remove('type')
+                    $results.PSObject.Properties.Remove('kind')
+                    $results.PSObject.Properties.Remove('etag')
+                    write-output "New alert req body: /////////////////////"
+			        $json = $results | ConvertTo-Json -Depth 5
+                    $json
+                    write-output "\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"
+   			        $updates=Invoke-RestMethod -Uri $url -Headers $headerParams -Method Put -Body $json -ContentType 'application/json'
+                    write-output "New alert results: /////////////////////"
+                    $updates                   
                 }
-                #get old VM config
-                #Write-Verbose "Getting the VM = $alertCI" -Verbose
-                #$oldvm = Get-AzureRmVm -Name $alertCI -ResourceGroupName $ResourceGroupName
-                #$oldvm
-                #Write-Verbose "Deleting old VM ($oldvm.Name)" -Verbose
             } elseif (!((Get-AzureRmVm -Name "RebuildableVM01test" -ResourceGroupName "RG-WE-RebuildableVMstest") -eq $null )) {
                 # test use only
                 Write-Verbose "Taking default VM = RebuidableVM01test" -Verbose
@@ -169,12 +202,6 @@ if ($WebhookData)
             } else {
                 Write-Error "NO VM TO REBUILD"
             }
-            #$azureLocation              = $vm.Location
-            #$azureResourceGroup         = $vm.ResourceGroupName
-            #$azureVmName                = $vm.Name
-            #$azureVmOsDiskName          = $vm.StorageProfile.OsDisk.Name
-            #$azureVmSize                = $vm.HardwareProfile.VmSize
-
         }
         elseif ($ResourceType -eq "Microsoft.Compute/virtualMachines")
         {
