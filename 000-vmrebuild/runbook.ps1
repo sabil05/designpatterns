@@ -26,9 +26,9 @@ if ($WebhookData)
         # Get the first target only as this script doesn't handle multiple
         $alertTargetIdArray = (($Essentials.alertTargetIds)[0]).Split("/")
         $ResourceType = ($alertTargetIdArray)[6] + "/" + ($alertTargetIdArray)[7]
-        $ResourceType
+        #$ResourceType
         $status = $Essentials.monitorCondition
-        $status
+        #$status
         #$alertTargetIdArray
         $SubId = ($alertTargetIdArray)[2]
         #$SubId
@@ -36,7 +36,7 @@ if ($WebhookData)
         $ResourceGroupName = (($alertQuery).Split("//"))[2]
         #$ResourceGroupName 
         $alertCIUUID = (($alertQuery).Split("//"))[-1]
-        $alertCIUUID
+        Write-Output "VM BIOS GUID (Azure VM VmId) = $alertCIUUID"
         #$alertRule = $Essentials.alertRule
         #$alertCI = (($alertRule).Split("-"))[-1]
         #Write-Verbose "Configuration Item: $alertCIs" -Verbose
@@ -127,32 +127,42 @@ if ($WebhookData)
 
                 #check VM activity logs for write actions (meaning that VM has been e.g. rebuilt)
                 $oldVm = Get-AzureRmVm -ResourceGroupName $ResourceGroupName | where-object {$_.VmId -eq $alertCIUUID}
+                Write-Output "Old VM config captured:"
+                Write-Output "<<<<<<<<<<<<<<<<<<<<<<START OLD VM>>>>>>>>>>>>>>>>>>>>>>"
                 $oldvm
+                Write-Output "<<<<<<<<<<<<<<<<<<<<<<END OF OLD VM>>>>>>>>>>>>>>>>>>>>>"
                 $vmlog = Get-AzureRmLog -ResourceGroupName $ResourceGroupName -starttime (get-date).addminutes(-10) | where-object {($_.Authorization.Action -eq "microsoft.compute/virtualmachines/write") -and (($_.ResourceId).Split("/")[-1] -eq $oldVm.Name)}
-                $vmlog
+                $logcount = $vmlog.Count
+                Write-Output "Write events in Activity Log Count = $logcount"
                 if ($vmlog.Count -eq 0) {
-                    #Remove-AzureRmVM -Name $oldvm.Name -ResourceGroupName $ResourceGroupName -Force
+                    Write-Output "<<<<<<<<<<<<<<<<<<<<<<DELETING VM:"
+                    Remove-AzureRmVM -Name $oldvm.Name -ResourceGroupName $ResourceGroupName -Force
+                    Write-Output "||VM DELETED! >>>>>>>>>>>>>>>>>>>>>"
                     $osDisk = Get-AzureRmDisk -DiskName $oldvm.StorageProfile.OsDisk.Name -ResourceGroupName $oldvm.ResourceGroupName
-                    $osDisk
+                    #$osDisk
                     $vmConfig = New-AzureRmVMConfig -VMName $oldvm.Name -VMSize $oldvm.HardwareProfile.VmSize
-                    $vmConfig
+                    #$vmConfig
                     $vm = Add-AzureRmVMNetworkInterface -VM $vmConfig -Id $oldvm.NetworkProfile.NetworkInterfaces.Id
                     #$vm
                     $vm = Set-AzureRmVMOSDisk -VM $vm -ManagedDiskId $osDisk.Id -CreateOption Attach -Linux
-                    $vm
+                    #$vm
                     $tags = $oldvm.Tags
+                    Write-Output "<<<<<<<<<<<<<<<<<<<<<<VM TAGS>>>>>>>>>>>>>>>>>>>>>>"
                     $tags
+                    Write-Output "<<<<<<<<<<<<<<<<<<<<<<END TAGS>>>>>>>>>>>>>>>>>>>>>"
+                    Write-Output "<<<<<<<<<<<<<<<<<<<<<<RE-CREATING VM:"
                     New-AzureRmVM -VM $vm -ResourceGroupName $oldvm.ResourceGroupName -Location $oldvm.Location -Tag $tags
+                    Write-Output "///////// VM CREATION FINISHED >>>>>>>>>>>>>>>>>>>>>"
                 }
                 #get old VM config
                 #Write-Verbose "Getting the VM = $alertCI" -Verbose
                 #$oldvm = Get-AzureRmVm -Name $alertCI -ResourceGroupName $ResourceGroupName
                 #$oldvm
                 #Write-Verbose "Deleting old VM ($oldvm.Name)" -Verbose
-            } elseif (!((Get-AzureRmVm -Name "RebuildableVM01" -ResourceGroupName "RG-WE-RebuildableVMs") -eq $null )) {
+            } elseif (!((Get-AzureRmVm -Name "RebuildableVM01test" -ResourceGroupName "RG-WE-RebuildableVMstest") -eq $null )) {
                 # test use only
                 Write-Verbose "Taking default VM = RebuidableVM01test" -Verbose
-                $oldvm = Get-AzureRmVm -Name "RebuildableVM01test" -ResourceGroupName "RG-WE-RebuildableVMs"
+                $oldvm = Get-AzureRmVm -Name "RebuildableVM01test" -ResourceGroupName "RG-WE-RebuildableVMstest"
                 $oldvm
                 Write-Verbose "Deleting old VM ($oldvm.Name)" -Verbose
                 Remove-AzureRmVM -Name $oldvm.Name -ResourceGroupName "RG-WE-RebuildableVMs" -Force
