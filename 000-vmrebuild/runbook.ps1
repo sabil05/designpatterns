@@ -13,28 +13,35 @@ if ($WebhookData)
 
     # Get the info needed to identify the VM (depends on the payload schema)
     $schemaId = $WebhookBody.schemaId
+    #$schemaId
     Write-Verbose "schemaId: $schemaId" -Verbose
     if ($schemaId -eq "azureMonitorCommonAlertSchema") {
         # This is the common Metric Alert schema (released March 2019)
         $Essentials = [object] ($WebhookBody.data).essentials
+        #$Essentials
         $AlertContext = [object] ($WebhookBody.data).alertContext
+        #$AlertContext
+        $alertQuery = $AlertContext.SearchQuery
+        #$alertQuery
         # Get the first target only as this script doesn't handle multiple
         $alertTargetIdArray = (($Essentials.alertTargetIds)[0]).Split("/")
+        $ResourceType = ($alertTargetIdArray)[6] + "/" + ($alertTargetIdArray)[7]
+        $ResourceType
+        $status = $Essentials.monitorCondition
+        $status
+        #$alertTargetIdArray
         $SubId = ($alertTargetIdArray)[2]
+        #$SubId
         #$ResourceGroupName = ($alertTargetIdArray)[4]
         $ResourceGroupName = (($alertQuery).Split("//"))[2]
-        $ResourceGroupName 
-        $ResourceType = ($alertTargetIdArray)[6] + "/" + ($alertTargetIdArray)[7]
-        $ResourceName = ($alertTargetIdArray)[-1]
-        $status = $Essentials.monitorCondition
-        $alertQuery = $AlertContext.SearchQuery
-        $alertRule = $Essentials.alertRule
-        $alertCI = (($alertRule).Split("-"))[-1]
-        $alertCIUUID = (($alertQuery).Split("//"))[1]
-        #Write-Verbose "Configuration Item: $alertCIs" -Verbose
-        Write-Verbose "Configuration Item: $alertCI" -Verbose
-        $alertCI
+        #$ResourceGroupName 
+        $alertCIUUID = (($alertQuery).Split("//"))[-1]
         $alertCIUUID
+        #$alertRule = $Essentials.alertRule
+        #$alertCI = (($alertRule).Split("-"))[-1]
+        #Write-Verbose "Configuration Item: $alertCIs" -Verbose
+        #Write-Verbose "Configuration Item: $alertCI" -Verbose
+        #$alertCI
     }
     elseif ($schemaId -eq "AzureMonitorMetricAlert") {
         # This is the near-real-time Metric Alert schema
@@ -120,18 +127,22 @@ if ($WebhookData)
 
                 #check VM activity logs for write actions (meaning that VM has been e.g. rebuilt)
                 $oldVm = Get-AzureRmVm -ResourceGroupName $ResourceGroupName | where-object {$_.VmId -eq $alertCIUUID}
-                $vmlog = Get-AzLog -ResourceGroupName $ResourceGroupName -starttime (get-date).addminutes(-10) | where-object {($_.Authorization.Action -eq "microsoft.compute/virtualmachines/write") -and (($_.ResourceId).Split("/")[-1] -eq $oldVm.Name)}
-                if ($vmlog.Count -eq) {
-                    Remove-AzureRmVM -Name $oldvm.Name -ResourceGroupName $ResourceGroupName -Force
+                $oldvm
+                $vmlog = Get-AzureRmLog -ResourceGroupName $ResourceGroupName -starttime (get-date).addminutes(-10) | where-object {($_.Authorization.Action -eq "microsoft.compute/virtualmachines/write") -and (($_.ResourceId).Split("/")[-1] -eq $oldVm.Name)}
+                $vmlog
+                if ($vmlog.Count -eq 0) {
+                    #Remove-AzureRmVM -Name $oldvm.Name -ResourceGroupName $ResourceGroupName -Force
                     $osDisk = Get-AzureRmDisk -DiskName $oldvm.StorageProfile.OsDisk.Name -ResourceGroupName $oldvm.ResourceGroupName
                     $osDisk
                     $vmConfig = New-AzureRmVMConfig -VMName $oldvm.Name -VMSize $oldvm.HardwareProfile.VmSize
                     $vmConfig
                     $vm = Add-AzureRmVMNetworkInterface -VM $vmConfig -Id $oldvm.NetworkProfile.NetworkInterfaces.Id
-                    $vm
+                    #$vm
                     $vm = Set-AzureRmVMOSDisk -VM $vm -ManagedDiskId $osDisk.Id -CreateOption Attach -Linux
                     $vm
-                    New-AzureRmVM -VM $vm -ResourceGroupName $oldvm.ResourceGroupName -Location $oldvm.Location
+                    $tags = $oldvm.Tags
+                    $tags
+                    New-AzureRmVM -VM $vm -ResourceGroupName $oldvm.ResourceGroupName -Location $oldvm.Location -Tag $tags
                 }
                 #get old VM config
                 #Write-Verbose "Getting the VM = $alertCI" -Verbose
