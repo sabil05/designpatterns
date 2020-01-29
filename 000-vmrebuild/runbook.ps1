@@ -33,10 +33,10 @@ if ($WebhookData)
         $SubId = ($alertTargetIdArray)[2]
         #$SubId
         #$ResourceGroupName = ($alertTargetIdArray)[4]
-        $ResourceGroupName = (($alertQuery).Split("//"))[2]
+        $ResourceGroupName = (($alertQuery).Split('//'))[2]
         Write-Output "RG = $ResourceGroupName"
-        $AzureAlertCIUUID = (($alertQuery).Split("//"))[3]
-        $OSAlertCIUUID = (($alertQuery).Split("//"))[-1]
+        $AzureAlertCIUUID = (($alertQuery).Split('//'))[4]
+        $OSAlertCIUUID = (($alertQuery).Split('//'))[6]
         Write-Output "Azure VM BIOS GUID = $AzureAlertCIUUID"
         Write-Output "OS VM BIOS GUID    = $OSAlertCIUUID"
         $alertRule = $Essentials.alertRule
