@@ -173,10 +173,10 @@ if ($WebhookData)
                     $newalertCIUUID = $recreatedVm.VmId
 			        write-output "New VM ID: $newalertCIUUID"
                     $olds = $AzureAlertCIUUID+"//"+$OSAlertCIUUID
-			        write-output "Old end: $old"
+			        write-output "Old end: $olds"
                     $news = $newalertCIUUID+"//"+$OSAlertCIUUID
-			        write-output "New end: $new"
-                    $newq = $oldq -replace $old,$new
+			        write-output "New end: $news"
+                    $newq = $oldq -replace $olds,$news
                     write-output "New Query: $newq"
                     $results.properties.source.query = $newq
                     $results.PSObject.Properties.Remove('id')
