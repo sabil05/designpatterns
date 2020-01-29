@@ -346,6 +346,10 @@
                 "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.compute.5.9.1.nupkg"
             },
             {
+                "name": "AzureRM.Insights",
+                "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.insights.5.1.5.nupkg"
+            },
+            {
                 "name": "AzureRm.Resources",
                 "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.resources.6.7.3.nupkg"
             },
