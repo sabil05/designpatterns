@@ -326,7 +326,7 @@
         },
         "alertTrigger": {
             "Operator": "LessThan",
-            "Threshold": "4"
+            "Threshold": "1"
         },
         "actionGrp": {
             "ActionGroup": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/',parameters('workspaceResourceGroupName'), '/providers/','microsoft.insights/actiongroups/', parameters('actionGroupName'))]",
