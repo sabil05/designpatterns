@@ -133,7 +133,7 @@ if ($WebhookData)
                 Write-Output "<<<<<<<<<<<<<<<<<<<<<<START OLD VM>>>>>>>>>>>>>>>>>>>>>>"
                 $oldvm
                 Write-Output "<<<<<<<<<<<<<<<<<<<<<<END OF OLD VM>>>>>>>>>>>>>>>>>>>>>"
-                $vmlog = Get-AzureRmLog -ResourceGroupName $ResourceGroupName -starttime (get-date).addminutes(-10) | where-object {($_.Authorization.Action -eq "microsoft.compute/virtualmachines/write") -and (($_.ResourceId).Split("/")[-1] -eq $oldVm.Name)}
+                $vmlog = Get-AzureRmLog -ResourceGroupName $ResourceGroupName -starttime (get-date).addminutes(-15) | where-object {($_.Authorization.Action -eq "microsoft.compute/virtualmachines/write") -and (($_.ResourceId).Split("/")[-1] -eq $oldVm.Name)}
                 $logcount = $vmlog.Count
                 Write-Output "Write events in Activity Log Count = $logcount"
                 if ($vmlog.Count -eq 0) {
