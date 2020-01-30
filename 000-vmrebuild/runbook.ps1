@@ -117,15 +117,29 @@ if ($WebhookData)
 				$cacheItem = $cache.ReadItems()
 				$AccessToken=$cacheItem[$cacheItem.Count -1].AccessToken
 				$headerParams = @{'Authorization'="Bearer $AccessToken"}
-				$durl="https://management.azure.com/subscriptions/$SubscriptionId/resourceGroups/$ResourceGroupName/providers/microsoft.insights/scheduledQueryRules/$alertRule"+"?api-version=2018-04-16"
-				$drBody = @{
-					'properties' = @{
-						'enabled' = 'false'
-					}
-				}
-				$djson = $drBody | ConvertTo-Json
-				$dresults=Invoke-RestMethod -Uri $durl -Headers $headerParams -Method Patch -Body $djson -ContentType 'application/json'
-				#$results
+   				$durl="https://management.azure.com/subscriptions/$SubscriptionId/resourceGroups/$ResourceGroupName/providers/microsoft.insights/scheduledQueryRules/$alertRule"+"?api-version=2018-04-16"
+    			$drBody = @{
+	    			'properties' = @{
+		    			'enabled' = 'false'
+			    	}
+		    	}
+		    	$djson = $drBody | ConvertTo-Json
+                try {
+			    	$dresults=Invoke-RestMethod -Uri $durl -Headers $headerParams -Method Patch -Body $djson -ContentType 'application/json'
+                    Write-Output "Res length =" $dresults.length
+			    	#$results
+                }
+                catch {
+                    Write-Output "Rule disable failed. It is not critical. Retrying 2 times..."
+                    for ($i=1; $i -le 2; $i++){
+                        Start-Sleep -s 2
+            	    	$dresults=Invoke-RestMethod -Uri $durl -Headers $headerParams -Method Patch -Body $djson -ContentType 'application/json'
+                        Write-Output "Res length =" $dresults.length
+                                if (!($dresults.length -eq 0)) {
+                                    Break
+                                }
+                        }
+                }
 
                 #check VM activity logs for write actions (meaning that VM has been e.g. rebuilt)
                 $oldVm = Get-AzureRmVm -ResourceGroupName $ResourceGroupName | where-object {$_.VmId -eq $AzureAlertCIUUID}
@@ -158,7 +172,21 @@ if ($WebhookData)
                     #Alert Rule need to be updated because VM has been rebuilt
                     Write-Output "///////// Alert Rule Update START >>>>>>>>>>>>>>>>>>>>>"
 			        $url="https://management.azure.com/subscriptions/$SubscriptionId/resourceGroups/$ResourceGroupName/providers/microsoft.insights/scheduledQueryRules/$alertRule"+"?api-version=2018-04-16"
-			        $results=Invoke-RestMethod -Uri $url -Headers $headerParams -Method Get -ContentType 'application/json'
+                    try {
+    			        $results=Invoke-RestMethod -Uri $url -Headers $headerParams -Method Get -ContentType 'application/json'
+                        Write-Output "Rule disable success. Proceeding..."
+                    }
+                    catch {
+                        Write-Output "Rule GET failed. It is critical. Retrying 5 times..."
+                         for ($i=1; $i -le 5; $i++){
+                                Start-Sleep -s 2
+                	        	$results=Invoke-RestMethod -Uri $url -Headers $headerParams -Method Get -ContentType 'application/json'
+                                if (!($results.length -eq 0)) {
+                                    Write-Output "Rule disable success. Proceeding..."
+                                    Break
+                                }
+                                }
+                    }
                     write-output "Old alert: /////////////////////"
                     $results
                     $oldq = $results.properties.source.query
@@ -181,20 +209,50 @@ if ($WebhookData)
                     write-output "New alert req body: /////////////////////"
 			        $json = $results | ConvertTo-Json -Depth 5
                     $json
+                    Write-Output "///////// Alert Rule Update END >>>>>>>>>>>>>>>>>>>>>"
                     write-output "\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"
-   			        $updates=Invoke-RestMethod -Uri $url -Headers $headerParams -Method Put -Body $json -ContentType 'application/json'
+                    try {
+       			        $updates=Invoke-RestMethod -Uri $url -Headers $headerParams -Method Put -Body $json -ContentType 'application/json'
+                        write-output "Success:" $updates
+                    }
+                    catch {
+                        Write-Output "$_"
+                        Write-Output "Rule update failed. It is critical. Retrying 5..."
+                        for ($i=1; $i -le 5; $i++){
+                            Start-Sleep -s 2
+           			        $updates=Invoke-RestMethod -Uri $url -Headers $headerParams -Method Put -Body $json -ContentType 'application/json'
+                                if (!($updates.length -eq 0)) {
+                                    Write-Output "Rule update success. Proceeding..."
+                                    Break
+                                }
+                            }
+                        }
                     write-output "New alert results: /////////////////////"
                     $updates                   
                     Write-Verbose "Enabling Alert Rule back after runbook execution time = $alertRule" -Verbose
-    				$eurl="https://management.azure.com/subscriptions/$SubscriptionId/resourceGroups/$ResourceGroupName/providers/microsoft.insights/scheduledQueryRules/$alertRule"+"?api-version=2018-04-16"
-	    			$erBody = @{
-		    			'properties' = @{
-			    			'enabled' = 'true'
-				    	}
-			    	}
-			    	$ejson = $erBody | ConvertTo-Json
-			    	$eresults=Invoke-RestMethod -Uri $eurl -Headers $headerParams -Method Patch -Body $ejson -ContentType 'application/json'
-                }
+   			    	$eurl="https://management.azure.com/subscriptions/$SubscriptionId/resourceGroups/$ResourceGroupName/providers/microsoft.insights/scheduledQueryRules/$alertRule"+"?api-version=2018-04-16"
+    		    	$erBody = @{
+	    	    		'properties' = @{
+		        			'enabled' = 'true'
+			     	}
+		        	}
+		        	$ejson = $erBody | ConvertTo-Json
+                    try {
+			    	    $eresults=Invoke-RestMethod -Uri $eurl -Headers $headerParams -Method Patch -Body $ejson -ContentType 'application/json'
+                    }
+                    catch {
+                        Write-Output "Rule enablement failed. It is critical. Retrying 5 times..."
+                        for ($i=1; $i -le 5; $i++){
+                                Start-Sleep -s 2
+        			    	    $eresults=Invoke-RestMethod -Uri $eurl -Headers $headerParams -Method Patch -Body $ejson -ContentType 'application/json'
+                                if (!($eresults.length -eq 0)) {
+                                    Write-Output "Rule enablement success. Proceeding..."
+                                    Break
+                                }
+                            }
+                        }
+                        }
+                    }
             } elseif (!((Get-AzureRmVm -Name "RebuildableVM01test" -ResourceGroupName "RG-WE-RebuildableVMstest") -eq $null )) {
                 # test use only
                 Write-Verbose "Taking default VM = RebuidableVM01test" -Verbose
