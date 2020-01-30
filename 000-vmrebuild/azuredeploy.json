@@ -227,6 +227,13 @@
                 "description": "Name for the log search alert rule."
             }
         },
+        "aaNewOrExisting": {
+            "type": "string",
+            "defaultValue": "new",
+            "metadata": {
+                "description": "Determines whether or not a new Automation Account should be provisioned."
+            }
+        },
         "automationAccountName": {
             "type": "string",
             "defaultValue": "AA-WE-RebuildableVMRunbooks1",
@@ -362,6 +369,7 @@
     "resources": [
         {
             "comments": "provision the AzureRM.Profile module first since others are depenedent on it",
+            "condition": "[equals(parameters('aaNewOrExisting'), 'new')]",
             "name": "[concat(parameters('automationAccountName'), '/', variables('AzureRM.Profile').name)]",
             "type": "Microsoft.Automation/automationAccounts/modules",
             "apiVersion": "2015-10-31",
@@ -377,6 +385,7 @@
             }
         },
         {
+            "condition": "[equals(parameters('aaNewOrExisting'), 'new')]",
             "name": "[concat(parameters('automationAccountName'), '/', variables('psModules')[copyIndex()].name)]",
             "type": "Microsoft.Automation/automationAccounts/modules",
             "apiVersion": "2015-10-31",
@@ -398,6 +407,7 @@
         },
 
         {
+            "condition": "[equals(parameters('aaNewOrExisting'), 'new')]",
             "name": "[concat(parameters('automationAccountName'), '/', parameters('rebuildRunBookName'))]",
             "type": "Microsoft.Automation/automationAccounts/runbooks",
             "location": "[parameters('automationRegion')]",
@@ -418,6 +428,7 @@
             }
         },
         {
+            "condition": "[equals(parameters('aaNewOrExisting'), 'new')]",
             "name": "[parameters('automationAccountName')]",
             "type": "Microsoft.Automation/automationAccounts",
             "apiVersion": "2015-10-31",
