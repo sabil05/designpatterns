@@ -368,7 +368,7 @@
     },
     "resources": [
         {
-            "comments": "provision the AzureRM.Profile module first since others are depenedent on it",
+            "comments": "provision the AzureRM.Profile module first since others are dependent on it",
             "condition": "[equals(parameters('aaNewOrExisting'), 'new')]",
             "name": "[concat(parameters('automationAccountName'), '/', variables('AzureRM.Profile').name)]",
             "type": "Microsoft.Automation/automationAccounts/modules",
@@ -483,6 +483,7 @@
         {
             "type": "Microsoft.Insights/actionGroups",
             "apiVersion": "2017-04-01",
+            "condition": "[equals(parameters('aaNewOrExisting'), 'new')]",
             "name": "[parameters('actionGroupName')]",
             "location": "Global",
             "properties": {
