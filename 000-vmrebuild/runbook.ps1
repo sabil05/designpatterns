@@ -100,10 +100,6 @@ if ($WebhookData) {
             Write-Verbose "Setting subscription to work against: $SubId" -Verbose
             Set-AzureRmContext -SubscriptionId $SubId -ErrorAction Stop | Write-Verbose
 
-            # Find out VM name from Affected Configuration Items array
-            #Stop-AzureRmVM -Name $ResourceName -ResourceGroupName $ResourceGroupName -Force
-            #Start-AzureRmVM -Name $ResourceName -ResourceGroupName $ResourceGroupName
-            #if (!($alertCI -eq $null)) {
             if (!($AzureAlertCIUUID -eq $null)) {
                 #disable alert rule to avoid false positives
                 Write-Verbose "Disanling Alert Rule for runbook execution time = $alertRule" -Verbose
@@ -146,18 +142,15 @@ if ($WebhookData) {
                 $vmlog = Get-AzureRmLog -ResourceGroupName $ResourceGroupName -starttime (get-date).addminutes(-15) | where-object { ($_.Authorization.Action -eq "microsoft.compute/virtualmachines/write") -and (($_.ResourceId).Split("/")[-1] -eq $oldVm.Name) }
                 $logcount = $vmlog.Count
                 Write-Output "Write events in Activity Log Count = $logcount"
+                #If write count is 0 then proceeed with VM rebuild
                 if ($vmlog.Count -eq 0) {
                     Write-Output "<<<<<<<<<<<<<<<<<<<<<<DELETING VM:"
                     Remove-AzureRmVM -Name $oldvm.Name -ResourceGroupName $ResourceGroupName -Force
                     Write-Output "||VM DELETED! >>>>>>>>>>>>>>>>>>>>>"
                     $osDisk = Get-AzureRmDisk -DiskName $oldvm.StorageProfile.OsDisk.Name -ResourceGroupName $oldvm.ResourceGroupName
-                    #$osDisk
                     $vmConfig = New-AzureRmVMConfig -VMName $oldvm.Name -VMSize $oldvm.HardwareProfile.VmSize
-                    #$vmConfig
                     $vm = Add-AzureRmVMNetworkInterface -VM $vmConfig -Id $oldvm.NetworkProfile.NetworkInterfaces.Id
-                    #$vm
                     $vm = Set-AzureRmVMOSDisk -VM $vm -ManagedDiskId $osDisk.Id -CreateOption Attach -Linux
-                    #$vm
                     $tags = $oldvm.Tags
                     Write-Output "<<<<<<<<<<<<<<<<<<<<<<VM TAGS>>>>>>>>>>>>>>>>>>>>>>"
                     $tags
@@ -191,9 +184,7 @@ if ($WebhookData) {
                     $newalertCIUUID = $recreatedVm.VmId
                     write-output "New VM ID: $newalertCIUUID"
                     $olds = $AzureAlertCIUUID + "//" + $OSAlertCIUUID
-                    write-output "Old end: $olds"
                     $news = $newalertCIUUID + "//" + $OSAlertCIUUID
-                    write-output "New end: $news"
                     $newq = $oldq -replace $olds, $news
                     write-output "New Query: $newq"
                     $results.properties.source.query = $newq
