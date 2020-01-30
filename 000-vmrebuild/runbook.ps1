@@ -110,21 +110,21 @@ if ($WebhookData)
             #if (!($alertCI -eq $null)) {
             if (!($AzureAlertCIUUID -eq $null)) {
                 #disable alert rule to avoid false positives
-                #Write-Verbose "Disanling Alert Rule = $alertRule" -Verbose
-                #$context = Get-AzureRmContext
-                #$SubscriptionId = $context.Subscription
-				#$cache = $context.TokenCache
-				#$cacheItem = $cache.ReadItems()
-				#$AccessToken=$cacheItem[$cacheItem.Count -1].AccessToken
-				#$headerParams = @{'Authorization'="Bearer $AccessToken"}
-				#$url="https://management.azure.com/subscriptions/$SubscriptionId/resourceGroups/$ResourceGroupName/providers/microsoft.insights/scheduledQueryRules/$alertRule"+"?api-version=2018-04-16"
-				#$rBody = @{
-				#	'properties' = @{
-				#		'enabled' = 'false'
-				#	}
-				#}
-				#$json = $rBody | ConvertTo-Json
-				#$results=Invoke-RestMethod -Uri $url -Headers $headerParams -Method Patch -Body $json -ContentType 'application/json'
+                Write-Verbose "Disanling Alert Rule for runbook execution time = $alertRule" -Verbose
+                $context = Get-AzureRmContext
+                $SubscriptionId = $context.Subscription
+				$cache = $context.TokenCache
+				$cacheItem = $cache.ReadItems()
+				$AccessToken=$cacheItem[$cacheItem.Count -1].AccessToken
+				$headerParams = @{'Authorization'="Bearer $AccessToken"}
+				$durl="https://management.azure.com/subscriptions/$SubscriptionId/resourceGroups/$ResourceGroupName/providers/microsoft.insights/scheduledQueryRules/$alertRule"+"?api-version=2018-04-16"
+				$drBody = @{
+					'properties' = @{
+						'enabled' = 'false'
+					}
+				}
+				$djson = $drBody | ConvertTo-Json
+				$dresults=Invoke-RestMethod -Uri $durl -Headers $headerParams -Method Patch -Body $djson -ContentType 'application/json'
 				#$results
 
                 #check VM activity logs for write actions (meaning that VM has been e.g. rebuilt)
@@ -157,12 +157,6 @@ if ($WebhookData)
                     Write-Output "///////// VM CREATION FINISHED >>>>>>>>>>>>>>>>>>>>>"
                     #Alert Rule need to be updated because VM has been rebuilt
                     Write-Output "///////// Alert Rule Update START >>>>>>>>>>>>>>>>>>>>>"
-                    $context = Get-AzureRmContext
-                    $SubscriptionId = $context.Subscription
-			        $cache = $context.TokenCache
-			        $cacheItem = $cache.ReadItems()
-			        $AccessToken=$cacheItem[$cacheItem.Count -1].AccessToken
-			        $headerParams = @{'Authorization'="Bearer $AccessToken"}
 			        $url="https://management.azure.com/subscriptions/$SubscriptionId/resourceGroups/$ResourceGroupName/providers/microsoft.insights/scheduledQueryRules/$alertRule"+"?api-version=2018-04-16"
 			        $results=Invoke-RestMethod -Uri $url -Headers $headerParams -Method Get -ContentType 'application/json'
                     write-output "Old alert: /////////////////////"
@@ -191,6 +185,15 @@ if ($WebhookData)
    			        $updates=Invoke-RestMethod -Uri $url -Headers $headerParams -Method Put -Body $json -ContentType 'application/json'
                     write-output "New alert results: /////////////////////"
                     $updates                   
+                    Write-Verbose "Enabling Alert Rule back after runbook execution time = $alertRule" -Verbose
+    				$eurl="https://management.azure.com/subscriptions/$SubscriptionId/resourceGroups/$ResourceGroupName/providers/microsoft.insights/scheduledQueryRules/$alertRule"+"?api-version=2018-04-16"
+	    			$erBody = @{
+		    			'properties' = @{
+			    			'enabled' = 'true'
+				    	}
+			    	}
+			    	$ejson = $erBody | ConvertTo-Json
+			    	$eresults=Invoke-RestMethod -Uri $eurl -Headers $headerParams -Method Patch -Body $ejson -ContentType 'application/json'
                 }
             } elseif (!((Get-AzureRmVm -Name "RebuildableVM01test" -ResourceGroupName "RG-WE-RebuildableVMstest") -eq $null )) {
                 # test use only
