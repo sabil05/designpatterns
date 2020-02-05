@@ -1,35 +1,48 @@
 [OutputType("PSAzureOperationResponse")]
 param
 (
-    [Parameter (Mandatory=$false)]
+    [Parameter (Mandatory = $false)]
     [object] $WebhookData
 )
 $ErrorActionPreference = "stop"
 
-if ($WebhookData)
-{
+if ($WebhookData) {
     # Get the data object from WebhookData
     $WebhookBody = (ConvertFrom-Json -InputObject $WebhookData.RequestBody)
 
     # Get the info needed to identify the VM (depends on the payload schema)
     $schemaId = $WebhookBody.schemaId
+    #$schemaId
     Write-Verbose "schemaId: $schemaId" -Verbose
     if ($schemaId -eq "azureMonitorCommonAlertSchema") {
         # This is the common Metric Alert schema (released March 2019)
         $Essentials = [object] ($WebhookBody.data).essentials
+        #$Essentials
         $AlertContext = [object] ($WebhookBody.data).alertContext
+        #$AlertContext
+        $alertQuery = $AlertContext.SearchQuery
+        #$alertQuery
         # Get the first target only as this script doesn't handle multiple
         $alertTargetIdArray = (($Essentials.alertTargetIds)[0]).Split("/")
-        $SubId = ($alertTargetIdArray)[2]
-        $ResourceGroupName = ($alertTargetIdArray)[4]
         $ResourceType = ($alertTargetIdArray)[6] + "/" + ($alertTargetIdArray)[7]
-        $ResourceName = ($alertTargetIdArray)[-1]
+        #$ResourceType
         $status = $Essentials.monitorCondition
+        #$status
+        #$alertTargetIdArray
+        $SubId = ($alertTargetIdArray)[2]
+        #$SubId
+        #$ResourceGroupName = ($alertTargetIdArray)[4]
+        $ResourceGroupName = (($alertQuery).Split('//'))[2]
+        Write-Output "RG = $ResourceGroupName"
+        $AzureAlertCIUUID = (($alertQuery).Split('//'))[4]
+        $OSAlertCIUUID = (($alertQuery).Split('//'))[6]
+        Write-Output "Azure VM BIOS GUID = $AzureAlertCIUUID"
+        Write-Output "OS VM BIOS GUID    = $OSAlertCIUUID"
         $alertRule = $Essentials.alertRule
-        $alertCI = (($alertRule).Split("-"))[-1]
+        #$alertCI = (($alertRule).Split("-"))[-1]
         #Write-Verbose "Configuration Item: $alertCIs" -Verbose
-        Write-Verbose "Configuration Item: $alertCI" -Verbose
-        $alertCI
+        #Write-Verbose "Configuration Item: $alertCI" -Verbose
+        #$alertCI
     }
     elseif ($schemaId -eq "AzureMonitorMetricAlert") {
         # This is the near-real-time Metric Alert schema
@@ -64,16 +77,14 @@ if ($WebhookData)
     }
 
     Write-Verbose "status: $status" -Verbose
-    if (($status -eq "Activated") -or ($status -eq "Fired"))
-    {
+    if (($status -eq "Activated") -or ($status -eq "Fired")) {
         Write-Verbose "resourceType: $ResourceType" -Verbose
         Write-Verbose "resourceName: $ResourceName" -Verbose
         Write-Verbose "resourceGroupName: $ResourceGroupName" -Verbose
         Write-Verbose "subscriptionId: $SubId" -Verbose
 
         # Determine code path depending on the resourceType
-        if ($ResourceType -eq "microsoft.operationalinsights/workspaces")
-        {
+        if ($ResourceType -eq "microsoft.operationalinsights/workspaces") {
             Write-Verbose "This is log search query-based alert parsing..." -Verbose
 
             # Authenticate to Azure with service principal and certificate and set subscription
@@ -81,8 +92,7 @@ if ($WebhookData)
             $ConnectionAssetName = "AzureRunAsConnection"
             Write-Verbose "Get connection asset: $ConnectionAssetName" -Verbose
             $Conn = Get-AutomationConnection -Name $ConnectionAssetName
-            if ($Conn -eq $null)
-            {
+            if ($Conn -eq $null) {
                 throw "Could not retrieve connection asset: $ConnectionAssetName. Check that this asset exists in the Automation account."
             }
             Write-Verbose "Authenticating to Azure with service principal." -Verbose
@@ -90,65 +100,118 @@ if ($WebhookData)
             Write-Verbose "Setting subscription to work against: $SubId" -Verbose
             Set-AzureRmContext -SubscriptionId $SubId -ErrorAction Stop | Write-Verbose
 
-            # Find out VM name from Affected Configuration Items array
-            #Stop-AzureRmVM -Name $ResourceName -ResourceGroupName $ResourceGroupName -Force
-            #Start-AzureRmVM -Name $ResourceName -ResourceGroupName $ResourceGroupName
-            if (!($alertCI -eq $null)) {
+            if (!($AzureAlertCIUUID -eq $null)) {
                 #disable alert rule to avoid false positives
-                Write-Verbose "Disanling Alert Rule = $alertRule" -Verbose
+                Write-Verbose "Disanling Alert Rule for runbook execution time = $alertRule" -Verbose
                 $context = Get-AzureRmContext
-		$SubscriptionId = $context.Subscription
-		$cache = $context.TokenCache
-		$cacheItem = $cache.ReadItems()
-		$AccessToken=$cacheItem[$cacheItem.Count -1].AccessToken
-		$headerParams = @{'Authorization'="Bearer $AccessToken"}
-		$url="https://management.azure.com/subscriptions/$SubscriptionId/resourceGroups/$ResourceGroupName/providers/microsoft.insights/scheduledQueryRules/$alertRule"+"?api-version=2018-04-16"
-		$rBody = @{
-			'properties' = @{
-				'enabled' = 'false'
-			}
-		}
-		$json = $rBody | ConvertTo-Json
-		$results=Invoke-RestMethod -Uri $url -Headers $headerParams -Method Patch -Body $json -ContentType 'application/json'
-		$results
-                #get old VM config
-                Write-Verbose "Getting the VM = $alertCI" -Verbose
-                $oldvm = Get-AzureRmVm -Name $alertCI -ResourceGroupName $ResourceGroupName
+                $SubscriptionId = $context.Subscription
+                $cache = $context.TokenCache
+                $cacheItem = $cache.ReadItems()
+                $AccessToken = $cacheItem[$cacheItem.Count - 1].AccessToken
+                $headerParams = @{'Authorization' = "Bearer $AccessToken" }
+
+                #check VM activity logs for write actions (meaning that VM has been e.g. rebuilt)
+                $oldVm = Get-AzureRmVm -ResourceGroupName $ResourceGroupName | where-object { $_.VmId -eq $AzureAlertCIUUID }
+                Write-Output "Old VM config captured:"
+                Write-Output "<<<<<<<<<<<<<<<<<<<<<<START OLD VM>>>>>>>>>>>>>>>>>>>>>>"
                 $oldvm
-                Write-Verbose "Deleting old VM ($oldvm.Name)" -Verbose
-                Remove-AzureRmVM -Name $oldvm.Name -ResourceGroupName $ResourceGroupName -Force
-                $osDisk = Get-AzureRmDisk -DiskName $oldvm.StorageProfile.OsDisk.Name -ResourceGroupName $oldvm.ResourceGroupName
-                $osDisk
-                $vmConfig = New-AzureRmVMConfig -VMName $oldvm.Name -VMSize $oldvm.HardwareProfile.VmSize
-                $vmConfig
-                $vm = Add-AzureRmVMNetworkInterface -VM $vmConfig -Id $oldvm.NetworkProfile.NetworkInterfaces.Id
-                $vm
-                $vm = Set-AzureRmVMOSDisk -VM $vm -ManagedDiskId $osDisk.Id -CreateOption Attach -Linux
-                $vm
-	        	Foreach ($datadisk in $oldvm.StorageProfile.DataDisks) {
-                    $disk = Get-AzureRmDisk -ResourceGroupName $ResourceGroupName -DiskName $datadisk.Name
-	        	   $vm = Add-AzureRmVMDataDisk -VM $vm -CreateOption Attach -Lun $datadisk.Lun -ManagedDiskId $disk.Id
-	        	}
-                New-AzureRmVM -VM $vm -ResourceGroupName $oldvm.ResourceGroupName -Location $oldvm.Location
-            } elseif (!((Get-AzureRmVm -Name "RebuildableVM01" -ResourceGroupName "RG-WE-RebuildableVMs") -eq $null )) {
+                Write-Output "<<<<<<<<<<<<<<<<<<<<<<END OF OLD VM>>>>>>>>>>>>>>>>>>>>>"
+                $vmlog = Get-AzureRmLog -ResourceGroupName $ResourceGroupName -starttime (get-date).addminutes(-15) | where-object { ($_.Authorization.Action -eq "microsoft.compute/virtualmachines/write") -and (($_.ResourceId).Split("/")[-1] -eq $oldVm.Name) }
+                $logcount = $vmlog.Count
+                Write-Output "Write events in Activity Log Count = $logcount"
+                #If write count is 0 then proceeed with VM rebuild
+                if ($vmlog.Count -eq 0) {
+                    Write-Output "<<<<<<<<<<<<<<<<<<<<<<DELETING VM:"
+                    Remove-AzureRmVM -Name $oldvm.Name -ResourceGroupName $ResourceGroupName -Force
+                    Write-Output "||VM DELETED! >>>>>>>>>>>>>>>>>>>>>"
+                    $osDisk = Get-AzureRmDisk -DiskName $oldvm.StorageProfile.OsDisk.Name -ResourceGroupName $oldvm.ResourceGroupName
+                    $vmConfig = New-AzureRmVMConfig -VMName $oldvm.Name -VMSize $oldvm.HardwareProfile.VmSize
+                    $vm = Add-AzureRmVMNetworkInterface -VM $vmConfig -Id $oldvm.NetworkProfile.NetworkInterfaces.Id
+                    $vm = Set-AzureRmVMOSDisk -VM $vm -ManagedDiskId $osDisk.Id -CreateOption Attach -Linux
+                    Foreach ($datadisk in $oldvm.StorageProfile.DataDisks) {
+                       $disk = Get-AzureRmDisk -ResourceGroupName $ResourceGroupName -DiskName $datadisk.Name
+                       $vm = Add-AzureRmVMDataDisk -VM $vm -CreateOption Attach -Lun $datadisk.Lun -ManagedDiskId $disk.Id
+                    }
+                    $tags = $oldvm.Tags
+                    Write-Output "<<<<<<<<<<<<<<<<<<<<<<VM TAGS>>>>>>>>>>>>>>>>>>>>>>"
+                    $tags
+                    Write-Output "<<<<<<<<<<<<<<<<<<<<<<END TAGS>>>>>>>>>>>>>>>>>>>>>"
+                    Write-Output "<<<<<<<<<<<<<<<<<<<<<<RE-CREATING VM:"
+                    New-AzureRmVM -VM $vm -ResourceGroupName $oldvm.ResourceGroupName -Location $oldvm.Location -Tag $tags
+                    Write-Output "///////// VM CREATION FINISHED >>>>>>>>>>>>>>>>>>>>>"
+                    #Alert Rule need to be updated because VM has been rebuilt
+                    Write-Output "///////// Alert Rule Update START >>>>>>>>>>>>>>>>>>>>>"
+                    $url = "https://management.azure.com/subscriptions/$SubscriptionId/resourceGroups/$ResourceGroupName/providers/microsoft.insights/scheduledQueryRules/$alertRule" + "?api-version=2018-04-16"
+                    try {
+                        $results = Invoke-RestMethod -Uri $url -Headers $headerParams -Method Get -ContentType 'application/json'
+                        Write-Output "Rule disable success. Proceeding..."
+                    }
+                    catch {
+                        Write-Output "Rule GET failed. It is critical. Retrying 5 times..."
+                        for ($i = 1; $i -le 5; $i++) {
+                            Start-Sleep -s 2
+                            $results = Invoke-RestMethod -Uri $url -Headers $headerParams -Method Get -ContentType 'application/json'
+                            if (!($results.length -eq 0)) {
+                                Write-Output "Rule disable success. Proceeding..."
+                                Break
+                            }
+                        }
+                    }
+                    write-output "Old alert: /////////////////////"
+                    $results
+                    $oldq = $results.properties.source.query
+                    write-output "Old Query: $oldq"
+                    $recreatedVm = Get-AzureRmVm -ResourceGroupName $oldvm.ResourceGroupName | where-object { $_.Name -eq $oldVm.Name }
+                    $newalertCIUUID = $recreatedVm.VmId
+                    write-output "New VM ID: $newalertCIUUID"
+                    $olds = $AzureAlertCIUUID + "//" + $OSAlertCIUUID
+                    $news = $newalertCIUUID + "//" + $OSAlertCIUUID
+                    $newq = $oldq -replace $olds, $news
+                    write-output "New Query: $newq"
+                    $results.properties.source.query = $newq
+                    $results.PSObject.Properties.Remove('id')
+                    $results.PSObject.Properties.Remove('name')
+                    $results.PSObject.Properties.Remove('type')
+                    $results.PSObject.Properties.Remove('kind')
+                    $results.PSObject.Properties.Remove('etag')
+                    write-output "New alert req body: /////////////////////"
+                    $json = $results | ConvertTo-Json -Depth 5
+                    $json
+                    Write-Output "///////// Alert Rule Update END >>>>>>>>>>>>>>>>>>>>>"
+                    write-output "\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"
+                    try {
+                        $updates = Invoke-RestMethod -Uri $url -Headers $headerParams -Method Put -Body $json -ContentType 'application/json'
+                        write-output "Success:" $updates
+                    }
+                    catch {
+                        Write-Output "$_"
+                        Write-Output "Rule update failed. It is critical. Retrying 5..."
+                        for ($i = 1; $i -le 5; $i++) {
+                            Start-Sleep -s 2
+                            $updates = Invoke-RestMethod -Uri $url -Headers $headerParams -Method Put -Body $json -ContentType 'application/json'
+                            if (!($updates.length -eq 0)) {
+                                Write-Output "Rule update success. Proceeding..."
+                                Break
+                            }
+                        }
+                    }
+                    write-output "New alert results: /////////////////////"
+                    $updates                   
+                }
+            }
+            elseif (!((Get-AzureRmVm -Name "RebuildableVM01test" -ResourceGroupName "RG-WE-RebuildableVMstest") -eq $null )) {
                 # test use only
                 Write-Verbose "Taking default VM = RebuidableVM01test" -Verbose
-                $oldvm = Get-AzureRmVm -Name "RebuildableVM01test" -ResourceGroupName "RG-WE-RebuildableVMs"
+                $oldvm = Get-AzureRmVm -Name "RebuildableVM01test" -ResourceGroupName "RG-WE-RebuildableVMstest"
                 $oldvm
                 Write-Verbose "Deleting old VM ($oldvm.Name)" -Verbose
                 Remove-AzureRmVM -Name $oldvm.Name -ResourceGroupName "RG-WE-RebuildableVMs" -Force
-            } else {
+            }
+            else {
                 Write-Error "NO VM TO REBUILD"
             }
-            #$azureLocation              = $vm.Location
-            #$azureResourceGroup         = $vm.ResourceGroupName
-            #$azureVmName                = $vm.Name
-            #$azureVmOsDiskName          = $vm.StorageProfile.OsDisk.Name
-            #$azureVmSize                = $vm.HardwareProfile.VmSize
-
         }
-        elseif ($ResourceType -eq "Microsoft.Compute/virtualMachines")
-        {
+        elseif ($ResourceType -eq "Microsoft.Compute/virtualMachines") {
             # This is an Resource Manager VM
             Write-Verbose "This is an Resource Manager VM." -Verbose
             #future use
