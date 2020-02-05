@@ -147,7 +147,7 @@
                 "description": "Name of the resource group for the existing workspace name"
             }
         },
-        "workspaceLocation": {
+        "workspaceRegion": {
             "type": "String",
             "defaultValue": "[resourceGroup().location]",
             "allowedValues": [
