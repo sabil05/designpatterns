@@ -140,10 +140,18 @@
                 "description": "Specifies the name of the workspace."
             }
         },
+        "workspaceResourceGroupName": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().name]",
+            "metadata": {
+                "description": "Name of the resource group for the existing workspace name"
+            }
+        },
         "workspaceLocation": {
             "type": "String",
-            "defaultValue": "westeurope",
+            "defaultValue": "[resourceGroup().location]",
             "allowedValues": [
+                "[resourceGroup().location]",
                 "australiacentral",
                 "australiaeast",
                 "australiasoutheast",
@@ -171,13 +179,6 @@
             ],
             "metadata": {
                 "description": "Specifies the location in which to create the workspace."
-            }
-        },
-        "workspaceResourceGroupName": {
-            "type": "string",
-            "defaultValue": "[resourceGroup().name]",
-            "metadata": {
-                "description": "Name of the resource group for the existing workspace name"
             }
         },
         "workspacePricingTier": {
@@ -248,10 +249,18 @@
                 "description": "Provide the name of rebuild runbook"
             }
         },
+        "automationResourceGroupName": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().name]",
+            "metadata": {
+                "description": "Name of the resource group for the automation account"
+            }
+        },
         "automationRegion": {
             "type": "string",
-            "defaultValue": "westeurope",
+            "defaultValue": "[resourceGroup().location]",
             "allowedValues": [
+                "[resourceGroup().location]",
                 "australiacentral",
                 "australiaeast",
                 "australiasoutheast",
