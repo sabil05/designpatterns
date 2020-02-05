@@ -126,6 +126,40 @@
                 "description": "Name of the resource group for the existing virtual network"
             }
         },
+        "vnetRegion": {
+            "type": "String",
+            "defaultValue": "[resourceGroup().location]",
+            "allowedValues": [
+                "[resourceGroup().location]",
+                "australiacentral",
+                "australiaeast",
+                "australiasoutheast",
+                "brazilsouth",
+                "canadacentral",
+                "centralindia",
+                "centralus",
+                "eastasia",
+                "eastus",
+                "eastus2",
+                "francecentral",
+                "japaneast",
+                "koreacentral",
+                "northcentralus",
+                "northeurope",
+                "southafricanorth",
+                "southcentralus",
+                "southeastasia",
+                "uksouth",
+                "ukwest",
+                "westcentralus",
+                "westeurope",
+                "westus",
+                "westus2"
+            ],
+            "metadata": {
+                "description": "Specifies the location in which existing VNET exist"
+            }
+        },
         "workspaceNewOrExisting": {
             "type": "string",
             "defaultValue": "new",
@@ -580,7 +614,7 @@
             "type": "Microsoft.Network/virtualNetworks",
             "apiVersion": "2017-09-01",
             "name": "[parameters('virtualNetworkName')]",
-            "location": "[parameters('location')]",
+            "location": "[parameters('vnetRegion')]",
             "properties": {
                 "addressSpace": {
                     "addressPrefixes": "[parameters('addressPrefixes')]"
@@ -599,7 +633,7 @@
             "apiVersion": "2017-09-01",
             "type": "Microsoft.Network/networkInterfaces",
             "name": "[variables('nicName')]",
-            "location": "[parameters('location')]",
+            "location": "[parameters('vnetRegion')]",
             "dependsOn": [
                 "[parameters('virtualNetworkName')]"
             ],
