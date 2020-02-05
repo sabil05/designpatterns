@@ -54,11 +54,27 @@
                 "description": "Size for the Virtual Machine."
             }
         },
+        "DataDisk1Size": 
+        {
+            "type": "int",
+            "defaultValue": 32,
+            "metadata": {
+                "description": "Size in Gb for first data disk (e.g. DB data)"
+            }
+        },
+        "DataDisk2Size": 
+        {
+            "type": "int",
+            "defaultValue": 32,
+            "metadata": {
+                "description": "Size in Gb for first data disk (e.g. DB data)"
+            }
+        },
         "storageNewOrExisting": {
             "type": "string",
             "defaultValue": "new",
             "metadata": {
-                "description": "Determines whether or not a new storage account should be provisioned."
+                "description": "Determines whether or not a new diagnostic storage account should be provisioned."
             }
         },
         "storageAccountName": {
@@ -91,7 +107,7 @@
         },
         "virtualNetworkName": {
             "type": "string",
-            "defaultValue": "VN-WE-RebuildableVMswithdata",
+            "defaultValue": "VN-WE-RebuildableVMsWithData",
             "metadata": {
                 "description": "Name of the virtual network"
             }
@@ -133,6 +149,40 @@
                 "description": "Name of the resource group for the existing virtual network"
             }
         },
+        "vnetRegion": {
+            "type": "String",
+            "defaultValue": "[resourceGroup().location]",
+            "allowedValues": [
+                "[resourceGroup().location]",
+                "australiacentral",
+                "australiaeast",
+                "australiasoutheast",
+                "brazilsouth",
+                "canadacentral",
+                "centralindia",
+                "centralus",
+                "eastasia",
+                "eastus",
+                "eastus2",
+                "francecentral",
+                "japaneast",
+                "koreacentral",
+                "northcentralus",
+                "northeurope",
+                "southafricanorth",
+                "southcentralus",
+                "southeastasia",
+                "uksouth",
+                "ukwest",
+                "westcentralus",
+                "westeurope",
+                "westus",
+                "westus2"
+            ],
+            "metadata": {
+                "description": "Specifies the location in which existing VNET exist"
+            }
+        },
         "workspaceNewOrExisting": {
             "type": "string",
             "defaultValue": "new",
@@ -142,15 +192,23 @@
         },
         "workspaceName": {
             "type": "String",
-            "defaultValue": "LA-WE-HeartBeatWorkspaceWithData",
+            "defaultValue": "LA-WE-HeartBeatWorkspace1",
             "metadata": {
                 "description": "Specifies the name of the workspace."
             }
         },
-        "workspaceLocation": {
+        "workspaceResourceGroupName": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().name]",
+            "metadata": {
+                "description": "Name of the resource group for the existing workspace name"
+            }
+        },
+        "workspaceRegion": {
             "type": "String",
-            "defaultValue": "westeurope",
+            "defaultValue": "[resourceGroup().location]",
             "allowedValues": [
+                "[resourceGroup().location]",
                 "australiacentral",
                 "australiaeast",
                 "australiasoutheast",
@@ -180,13 +238,6 @@
                 "description": "Specifies the location in which to create the workspace."
             }
         },
-        "workspaceResourceGroupName": {
-            "type": "string",
-            "defaultValue": "[resourceGroup().name]",
-            "metadata": {
-                "description": "Name of the resource group for the existing workspace name"
-            }
-        },
         "workspacePricingTier": {
             "type": "string",
             "allowedValues": [
@@ -204,7 +255,7 @@
         },
         "actionGroupName": {
             "type": "string",
-            "defaultValue": "AG-RebuildRunBookWithData",
+            "defaultValue": "AG-RebuildRunBookData",
             "minLength": 1,
             "metadata": {
                 "description": "Name for the Action group."
@@ -234,9 +285,16 @@
                 "description": "Name for the log search alert rule."
             }
         },
+        "aaNewOrExisting": {
+            "type": "string",
+            "defaultValue": "new",
+            "metadata": {
+                "description": "Determines whether or not a new Automation Account should be provisioned."
+            }
+        },
         "automationAccountName": {
             "type": "string",
-            "defaultValue": "AA-WE-RebuildableVMRunbooksWithData",
+            "defaultValue": "AA-WE-RebuildableVMRunbooks1",
             "metadata": {
                 "description": "Provide the name of Automation Account"
             }
@@ -248,10 +306,18 @@
                 "description": "Provide the name of rebuild runbook"
             }
         },
+        "automationResourceGroupName": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().name]",
+            "metadata": {
+                "description": "Name of the resource group for the automation account"
+            }
+        },
         "automationRegion": {
             "type": "string",
-            "defaultValue": "westeurope",
+            "defaultValue": "[resourceGroup().location]",
             "allowedValues": [
+                "[resourceGroup().location]",
                 "australiacentral",
                 "australiaeast",
                 "australiasoutheast",
@@ -291,6 +357,13 @@
             "metadata": {
                 "description": "Pricing tier: Free or Basic"
             }
+        },
+        "alertGUID": {
+            "type": "string",
+            "defaultValue": "[newGuid()]",
+            "metadata": {
+                "description": "GUID for new alert, DO NOT CHANGE"
+            }
         }
     },
     "variables": {
@@ -307,18 +380,18 @@
             }
         },
         "workspaceID": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/',parameters('workspaceResourceGroupName'), '/providers/','Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]",
+        "vmresID": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/',resourceGroup().name, '/providers/','Microsoft.Compute/virtualmachines/', parameters('vmName'))]",
         "alertName": "[parameters('logSearchAlertRuleName')]",
         "alertDescr": "Sample log search alert",
-        "alertStatus": "false",
+        "alertStatus": "true",
         "alertSource": {
-            "Query": "[concat('Heartbeat | where Computer == \"',parameters('vmName'),'\"')]",
             "Resource1": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/',parameters('workspaceResourceGroupName'), '/providers/','Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]",
             "SourceId": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/',parameters('workspaceResourceGroupName'), '/providers/','Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]",
             "Type": "ResultCount"
         },
         "alertSchedule": {
             "Frequency": 5,
-            "Time": 10
+            "Time": 5
         },
         "alertActions": {
             "SeverityLevel": "1",
@@ -326,15 +399,15 @@
         },
         "alertTrigger": {
             "Operator": "LessThan",
-            "Threshold": "6"
+            "Threshold": "1"
         },
         "actionGrp": {
             "ActionGroup": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/',parameters('workspaceResourceGroupName'), '/providers/','microsoft.insights/actiongroups/', parameters('actionGroupName'))]",
-            "Subject": "Customized Email Header"
+            "Subject": "[concat('VM heartbeats lost for : ',parameters('vmName'))]"
         },
         "automationAccountID": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/',parameters('workspaceResourceGroupName'), '/providers/','Microsoft.Automation/automationAccounts/', parameters('automationAccountName'))]",
-        "runbookScriptUri": "https://raw.githubusercontent.com/zhjuve/designpatterns/master/001-vmrebuilddata/runbook.ps1",
-        "webhookURI": "https://s2events.azure-automation.net/webhooks?token=ho%2blNtQNVVvNzQ1ZLvQ8MivDbQGUHT%2bTjnnN1tgFrzw%3d",
+        "runbookScriptUri": "https://raw.githubusercontent.com/zhjuve/designpatterns/master/000-vmrebuild/runbook.ps1",
+        "webhookURI": "nouri",
         "webhookRRB": "AlertForRebuildRunbook",
         "AzureRM.Profile": {
             "name": "AzureRm.Profile",
@@ -344,6 +417,10 @@
             {
                 "name": "AzureRM.Compute",
                 "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.compute.5.9.1.nupkg"
+            },
+            {
+                "name": "AzureRM.Insights",
+                "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.insights.5.1.5.nupkg"
             },
             {
                 "name": "AzureRm.Resources",
@@ -357,7 +434,8 @@
     },
     "resources": [
         {
-            "comments": "provision the AzureRM.Profile module first since others are depenedent on it",
+            "comments": "provision the AzureRM.Profile module first since others are dependent on it",
+            "condition": "[equals(parameters('aaNewOrExisting'), 'new')]",
             "name": "[concat(parameters('automationAccountName'), '/', variables('AzureRM.Profile').name)]",
             "type": "Microsoft.Automation/automationAccounts/modules",
             "apiVersion": "2015-10-31",
@@ -373,6 +451,7 @@
             }
         },
         {
+            "condition": "[equals(parameters('aaNewOrExisting'), 'new')]",
             "name": "[concat(parameters('automationAccountName'), '/', variables('psModules')[copyIndex()].name)]",
             "type": "Microsoft.Automation/automationAccounts/modules",
             "apiVersion": "2015-10-31",
@@ -394,6 +473,7 @@
         },
 
         {
+            "condition": "[equals(parameters('aaNewOrExisting'), 'new')]",
             "name": "[concat(parameters('automationAccountName'), '/', parameters('rebuildRunBookName'))]",
             "type": "Microsoft.Automation/automationAccounts/runbooks",
             "location": "[parameters('automationRegion')]",
@@ -414,6 +494,7 @@
             }
         },
         {
+            "condition": "[equals(parameters('aaNewOrExisting'), 'new')]",
             "name": "[parameters('automationAccountName')]",
             "type": "Microsoft.Automation/automationAccounts",
             "apiVersion": "2015-10-31",
@@ -428,7 +509,7 @@
         },
 
         {
-            "name": "[concat(variables('alertName'),'-',parameters('vmName'))]",
+            "name": "[concat(variables('alertName'),'--',resourceGroup().name,'--',parameters('vmName'),'--',parameters('alertGUID'))]",
             "type": "Microsoft.Insights/scheduledQueryRules",
             "apiVersion": "2018-04-16",
             "location": "[parameters('location')]",
@@ -440,7 +521,7 @@
                 "description": "[variables('alertDescr')]",
                 "enabled": "[variables('alertStatus')]",
                 "source": {
-                    "query": "[variables('alertSource').Query]",
+                    "query": "[concat('Heartbeat | where VMUUID contains substring(\"',reference(variables('vmresID'), '2017-03-30').VmId,'\",19,17)//',resourceGroup().name,'//',reference(variables('vmresID'), '2017-03-30').VmId,'//',reference(variables('vmresID'), '2017-03-30').VmId)]",
                     "authorizedResources": "[concat(array(variables('alertSource').Resource1))]",
                     "dataSourceId": "[variables('alertSource').SourceId]",
                     "queryType": "[variables('alertSource').Type]"
@@ -468,6 +549,7 @@
         {
             "type": "Microsoft.Insights/actionGroups",
             "apiVersion": "2017-04-01",
+            "condition": "[equals(parameters('aaNewOrExisting'), 'new')]",
             "name": "[parameters('actionGroupName')]",
             "location": "Global",
             "properties": {
@@ -529,7 +611,7 @@
             "type": "Microsoft.OperationalInsights/workspaces",
             "name": "[parameters('workspaceName')]",
             "apiVersion": "2015-11-01-preview",
-            "location": "[parameters('workspaceLocation')]",
+            "location": "[parameters('workspaceRegion')]",
             "properties": {
                 "features": {
                     "searchVersion": 1
@@ -555,7 +637,7 @@
             "type": "Microsoft.Network/virtualNetworks",
             "apiVersion": "2017-09-01",
             "name": "[parameters('virtualNetworkName')]",
-            "location": "[parameters('location')]",
+            "location": "[parameters('vnetRegion')]",
             "properties": {
                 "addressSpace": {
                     "addressPrefixes": "[parameters('addressPrefixes')]"
@@ -574,7 +656,7 @@
             "apiVersion": "2017-09-01",
             "type": "Microsoft.Network/networkInterfaces",
             "name": "[variables('nicName')]",
-            "location": "[parameters('location')]",
+            "location": "[parameters('vnetRegion')]",
             "dependsOn": [
                 "[parameters('virtualNetworkName')]"
             ],
@@ -627,13 +709,13 @@
                     "dataDisks": [
                         {
                             "name": "[concat(parameters('vmName'), '_Data1')]",
-                            "diskSizeGB": 32,
+                            "diskSizeGB": "[parameters('DataDisk1Size')]",
                             "lun": 0,
                             "createOption": "Empty"
                         },
                         {
                             "name": "[concat(parameters('vmName'), '_Data2')]",
-                            "diskSizeGB": 32,
+                            "diskSizeGB": "[parameters('DataDisk2Size')]",
                             "lun": 1,
                             "createOption": "Empty"
                         }
@@ -659,6 +741,10 @@
         "webhookURI": {
             "type": "string",
             "value": "[variables('webhookURI')]"
+        },
+        "VMUUID": {
+            "type": "string",
+            "value": "[reference(variables('vmresID'), '2017-03-30').VmId]"
         }
     }
 }
