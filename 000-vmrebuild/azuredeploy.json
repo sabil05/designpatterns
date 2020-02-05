@@ -588,7 +588,7 @@
             "type": "Microsoft.OperationalInsights/workspaces",
             "name": "[parameters('workspaceName')]",
             "apiVersion": "2015-11-01-preview",
-            "location": "[parameters('workspaceLocation')]",
+            "location": "[parameters('workspaceRegion')]",
             "properties": {
                 "features": {
                     "searchVersion": 1
