@@ -192,7 +192,7 @@
         },
         "workspaceName": {
             "type": "String",
-            "defaultValue": "LA-WE-HeartBeatWorkspace1",
+            "defaultValue": "LA-WE-HeartBeatWorkspace2",
             "metadata": {
                 "description": "Specifies the name of the workspace."
             }
@@ -294,7 +294,7 @@
         },
         "automationAccountName": {
             "type": "string",
-            "defaultValue": "AA-WE-RebuildableVMRunbooks1",
+            "defaultValue": "AA-WE-RebuildableVMRunbooks2",
             "metadata": {
                 "description": "Provide the name of Automation Account"
             }
