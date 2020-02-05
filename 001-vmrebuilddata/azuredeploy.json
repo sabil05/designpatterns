@@ -406,7 +406,7 @@
             "Subject": "[concat('VM heartbeats lost for : ',parameters('vmName'))]"
         },
         "automationAccountID": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/',parameters('workspaceResourceGroupName'), '/providers/','Microsoft.Automation/automationAccounts/', parameters('automationAccountName'))]",
-        "runbookScriptUri": "https://raw.githubusercontent.com/zhjuve/designpatterns/master/000-vmrebuild/runbook.ps1",
+        "runbookScriptUri": "https://raw.githubusercontent.com/zhjuve/designpatterns/master/001-vmrebuilddata/runbook.ps1",
         "webhookURI": "nouri",
         "webhookRRB": "AlertForRebuildRunbook",
         "AzureRM.Profile": {
